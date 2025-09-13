@@ -7,9 +7,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   player: Phaser.Physics.Arcade.Sprite
   scene: GameScene
 
-  constructor(scene: GameScene, x?: number, y?: number, flip?: boolean) {
-    super(scene, x ?? 0, y ?? 0, 'player')
+  constructor(scene: GameScene) {
+    const spawn = scene.map.findObject('Spawn', (o) => o.name === 'spawn') ?? {
+      x: 0,
+      y: 0,
+    }
+
+    super(scene, spawn.x ?? 0, spawn.y ?? 0, 'player')
     this.scene = scene
+
+    const flip = !!getProperty(spawn, 'flip')
 
     this.scene.physics.add.existing(this)
     this.scene.add.existing(this)
@@ -48,3 +55,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
   }
 }
+
+const getProperty = (o: any, k: string) =>
+  o.properties.find((p: any) => p.name === k)
