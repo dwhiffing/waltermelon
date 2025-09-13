@@ -14,7 +14,11 @@ const config: Types.Core.GameConfig = {
   zoom: 4,
   physics: {
     default: 'arcade',
-    arcade: { debug: false, gravity: { y: 340, x: 0 } },
+    arcade: {
+      debug: false,
+      gravity: { y: 340, x: 0 },
+      fps: 300,
+    },
   },
   // scale: {
   //   mode: Phaser.Scale.ZOOM_2X,
