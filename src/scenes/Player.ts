@@ -166,7 +166,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     for (const tile of this.getAdjacentTiles()) {
       if (tile?.index !== 4 && tile?.index !== 5) continue
-      const slopeY = this.getSlope(tile, this.body.x + this.body.width / 2)
+      const slopeY = this.getSlope(tile)
       if (!slopeY) continue
 
       if (this.slopeDirection === 0) this.body.velocity.x *= 0.8
@@ -181,13 +181,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.slopeDirection = slopeDirection
   }
 
-  getSlope(tile: Phaser.Tilemaps.Tile, x: number): number | null {
+  getSlope(tile: Phaser.Tilemaps.Tile): number | null {
     const tx = tile.x * tileSize
     const ty = tile.y * tileSize
+    const px = this.body.x + this.body.width / 2
+    const py = this.body.y + this.body.height / 2
 
-    if (x < tx || x > tx + tileSize) return null
+    if (Math.abs(py - ty) > 10) return null
+    if (px < tx || px > tx + tileSize) return null
 
-    const relativeX = (x - tx) / tileSize
+    const relativeX = (px - tx) / tileSize
 
     if (tile.index === 4) {
       return ty + tileSize - relativeX * tileSize
