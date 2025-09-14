@@ -166,17 +166,21 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       : this.onGround
       ? 1
       : AIR_CONTROL_PERCENT
+
+    let prevDir
     if (this.scene.cursors.left.isDown) {
       this.setFlipX(true)
-      this.previousDirection = -1
       this.body.setAccelerationX(-speed * controlMultiplier)
+      prevDir = -1
     } else if (this.scene.cursors.right.isDown) {
       this.setFlipX(false)
-      this.previousDirection = 1
+      prevDir = 1
       this.body.setAccelerationX(speed * controlMultiplier)
     } else {
-      this.previousDirection = 0
+      prevDir = 0
     }
+    if (typeof prevDir === 'number')
+      this.scene.time.delayedCall(100, () => (this.previousDirection = prevDir))
   }
 
   handleSlope() {
