@@ -45,11 +45,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   update() {
-    const body = this.body as Phaser.Physics.Arcade.Body
     const isHoldingDown = this.scene.cursors.down.isDown
-    const v = body.velocity.x
-    const speed = Math.abs(v)
-    const moveDir = v > 5 ? 1 : v < -5 ? -1 : 0
+    const vx = this.body.velocity.x
+    const vy = this.body.velocity.y
+    const speed = Math.abs(vx)
+    const moveDir = vx > 5 ? 1 : vx < -5 ? -1 : 0
 
     this.dust
       .setFlipX(this.flipX)
@@ -59,7 +59,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.setDepth(this.hangingLedge ? -1 : 10)
 
     if (this.hangingLedge) {
-      body.setVelocity(0, 0).setAcceleration(0, 0)
+      this.body.setVelocity(0, 0).setAcceleration(0, 0)
 
       this.x = this.hangingLedge.x
       this.y = this.hangingLedge.y
@@ -84,7 +84,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (
       !this.onSlope &&
       !this.isRolling &&
-      body.velocity.y > 0 &&
+      !this.hangingLedge &&
+      vy > 0 &&
       this.anims.currentAnim!.key !== 'player-jump3'
     ) {
       this.play({ key: 'player-jump3' }, true)
@@ -102,8 +103,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.isRunning &&
         this.isChangingDirection
       const shouldStopSkid =
-        this.isSkidding &&
-        (this.inputDirection === moveDir || Math.abs(body.velocity.x) < 5)
+        this.isSkidding && (this.inputDirection === moveDir || speed < 5)
 
       if (shouldRoll) this.roll()
       if (shouldStartCrouch) {
@@ -195,8 +195,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   handleSlope() {
     let slopeDirection = 0
-    const v = this.body.velocity.x
-    const moveDir = v > 5 ? 1 : v < -5 ? -1 : 0
+    const vx = this.body.velocity.x
+    const vy = this.body.velocity.y
+    const speed = Math.abs(vx)
+    const moveDir = vx > 5 ? 1 : vx < -5 ? -1 : 0
 
     if (this.body.velocity.y < 0) return
 
@@ -208,10 +210,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       slopeDirection = tile?.index === 4 ? 1 : -1
 
       if (this.slopeDirection === 0) {
-        if (
-          this.body.velocity.y > 10 ||
-          (Math.abs(this.body.velocity.x) > 70 && moveDir !== slopeDirection)
-        )
+        if (vy > 10 || (speed > 70 && moveDir !== slopeDirection))
           this.rollDirection = slopeDirection
 
         this.body.velocity.x *= 0.8
@@ -272,10 +271,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   // crouch/roll
   roll = () => {
-    const body = this.body as Phaser.Physics.Arcade.Body
-
     if (
-      !body.blocked.down ||
+      !this.body.blocked.down ||
       this.isRolling ||
       this.isCrouching ||
       this.isExitingCrouch
@@ -289,7 +286,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         ? -1
         : 1
 
-    body.setVelocityX(this.rollDirection * ROLL_SPEED)
+    this.body.setVelocityX(this.rollDirection * ROLL_SPEED)
 
     this.setDrag(0, 0)
       .play({ key: 'player-roll', frameRate: 10 })
