@@ -13,6 +13,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   previousDirection = 0
   isSkidding = false
   isRolling = false
+  isRunning = false
   rollDirection = 0
   isCrouching = false
   isExitingCrouch = false
@@ -47,7 +48,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     if (body.blocked.down) {
-      this.setDrag(DRAG, 0)
+      this.setDrag(this.isRunning ? DRAG : DRAG * 2, 0)
       this.fallFlag = false
 
       const inputDir = c.left.isDown ? -1 : c.right.isDown ? 1 : 0
@@ -58,15 +59,22 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
           this.isCrouching = true
           this.play('player-crouch', true)
         }
-      } else {
-        if (this.isCrouching && !this.isExitingCrouch) {
-          this.isExitingCrouch = true
-          this.play({ key: 'player-uncrouch' }, true)
-          this.once('animationcomplete', this.onCrouchExitComplete)
-        }
+      }
+      if (c.down.isDown && this.isRunning && Math.abs(body.velocity.x) > 80) {
+        this.roll()
+      }
+      if (!c.down.isDown && this.isCrouching && !this.isExitingCrouch) {
+        this.isExitingCrouch = true
+        this.play({ key: 'player-uncrouch' }, true)
+        this.once('animationcomplete', this.onCrouchExitComplete)
       }
 
-      if (inputDir !== 0 && moveDir !== 0 && inputDir !== moveDir) {
+      if (
+        this.isRunning &&
+        inputDir !== 0 &&
+        moveDir !== 0 &&
+        inputDir !== moveDir
+      ) {
         if (!this.isSkidding) {
           this.isSkidding = true
           this.play('player-skid', true)
@@ -80,11 +88,18 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         }
       }
 
-      if (!this.isSkidding && !this.isCrouching && !this.isExitingCrouch) {
+      if (
+        !this.isSkidding &&
+        !this.isCrouching &&
+        !this.isExitingCrouch &&
+        !this.isRolling
+      ) {
         if (body.velocity.x === 0) {
+          this.isRunning = false // Stop running when velocity hits 0
           this.play({ key: 'player-idle', frameRate: 4 }, true)
         } else {
-          if (Math.abs(body.velocity.x) > 80) {
+          // Play run or walk animation based on running state
+          if (this.isRunning && Math.abs(body.velocity.x) > 5) {
             this.play({ key: 'player-run', frameRate: 8 }, true)
           } else {
             this.play({ key: 'player-walk', frameRate: 8 }, true)
@@ -96,6 +111,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.isSkidding = false // Can't skid in air
       this.isCrouching = false // Can't crouch in air
       this.isExitingCrouch = false // Cancel crouch exit in air
+      this.isRolling = false // Cancel roll in air
       if (body.velocity.y < 0) {
         this.play('player-jump', true)
       } else if (!this.fallFlag) {
@@ -111,21 +127,25 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const isOnGround = body.blocked.down
     const controlMultiplier = isOnGround ? 1.0 : AIR_CONTROL_PERCENT
 
+    const speed = this.isRunning ? SPEED : SPEED * 0.5
+
+    this.setMaxVelocity(this.isRunning ? MAX_SPEED : MAX_SPEED * 0.5, 1000)
+
     if (this.scene.cursors.left.isDown) {
       this.setFlipX(true)
       this.previousDirection = -1
       if (isOnGround) {
-        body.setAccelerationX(body.velocity.x <= 0 ? -SPEED : 0)
+        body.setAccelerationX(body.velocity.x <= 0 ? -speed : 0)
       } else {
-        body.setAccelerationX(-SPEED * controlMultiplier)
+        body.setAccelerationX(-speed * controlMultiplier)
       }
     } else if (this.scene.cursors.right.isDown) {
       this.setFlipX(false)
       this.previousDirection = 1
       if (isOnGround) {
-        body.setAccelerationX(body.velocity.x >= 0 ? SPEED : 0)
+        body.setAccelerationX(body.velocity.x >= 0 ? speed : 0)
       } else {
-        body.setAccelerationX(SPEED * controlMultiplier)
+        body.setAccelerationX(speed * controlMultiplier)
       }
     } else {
       this.previousDirection = 0
@@ -172,13 +192,17 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.play('player-idle', true)
   }
 
+  toggleRunning = () => {
+    this.isRunning = true
+  }
+
   jump = () => {
     const body = this.body as Phaser.Physics.Arcade.Body
     if (body.blocked.down && !this.isCrouching && !this.isExitingCrouch) {
       this.scene.time.delayedCall(10, () => {
         this.play('player-jump')
       })
-      body.setVelocityY(-JUMP_HEIGHT)
+      body.setVelocityY(-(JUMP_HEIGHT * (this.isRunning ? 1.1 : 0.9)))
     }
   }
 }

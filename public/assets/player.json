@@ -329,6 +329,7 @@
    { "name": "player-wallslide", "from": 24, "to": 27, "direction": "forward", "color": "#000000ff" },
    { "name": "player-skid", "from": 28, "to": 28, "direction": "forward", "color": "#000000ff" },
    { "name": "player-roll", "from": 29, "to": 34, "direction": "forward", "color": "#000000ff" },
+   { "name": "player-roll-loop", "from": 30, "to": 34, "direction": "forward", "color": "#000000ff" },
    { "name": "player-crouch", "from": 35, "to": 38, "direction": "forward", "color": "#000000ff" },
    { "name": "player-uncrouch", "from": 35, "to": 38, "direction": "reverse", "color": "#000000ff" }
   ]
