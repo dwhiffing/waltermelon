@@ -9,6 +9,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   player: Phaser.Physics.Arcade.Sprite
   scene: GameScene
   fallFlag = false
+  previousDirection = 0
+  isSkidding = false
 
   constructor(scene: GameScene) {
     const spawn = scene.map.findObject('Spawn', (o) => o.name === 'spawn') ?? {
@@ -36,17 +38,39 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (body.blocked.down) {
       this.setDrag(DRAG, 0)
       this.fallFlag = false
-      if (body.velocity.x === 0) {
-        this.play({ key: 'player-idle', frameRate: 4 }, true)
+
+      const c = this.scene.cursors
+      const inputDir = c.left.isDown ? -1 : c.right.isDown ? 1 : 0
+      const moveDir = body.velocity.x > 5 ? 1 : body.velocity.x < -5 ? -1 : 0
+
+      if (inputDir !== 0 && moveDir !== 0 && inputDir !== moveDir) {
+        if (!this.isSkidding) {
+          this.isSkidding = true
+          this.play('player-skid', true)
+        }
       } else {
-        if (Math.abs(body.velocity.x) > 80) {
-          this.play({ key: 'player-run', frameRate: 8 }, true)
+        if (
+          this.isSkidding &&
+          (inputDir === moveDir || Math.abs(body.velocity.x) < 5)
+        ) {
+          this.isSkidding = false
+        }
+      }
+
+      if (!this.isSkidding) {
+        if (body.velocity.x === 0) {
+          this.play({ key: 'player-idle', frameRate: 4 }, true)
         } else {
-          this.play({ key: 'player-walk', frameRate: 8 }, true)
+          if (Math.abs(body.velocity.x) > 80) {
+            this.play({ key: 'player-run', frameRate: 8 }, true)
+          } else {
+            this.play({ key: 'player-walk', frameRate: 8 }, true)
+          }
         }
       }
     } else {
       this.setDrag(0)
+      this.isSkidding = false // Can't skid in air
       if (body.velocity.y < 0) {
         this.play('player-jump', true)
       } else if (!this.fallFlag) {
@@ -62,6 +86,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     if (this.scene.cursors.left.isDown) {
       this.setFlipX(true)
+      this.previousDirection = -1
       if (isOnGround) {
         body.setAccelerationX(body.velocity.x <= 0 ? -SPEED : 0)
       } else {
@@ -69,11 +94,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       }
     } else if (this.scene.cursors.right.isDown) {
       this.setFlipX(false)
+      this.previousDirection = 1
       if (isOnGround) {
         body.setAccelerationX(body.velocity.x >= 0 ? SPEED : 0)
       } else {
         body.setAccelerationX(SPEED * controlMultiplier)
       }
+    } else {
+      this.previousDirection = 0
     }
   }
   jump = () => {
