@@ -2,7 +2,7 @@ import { GameScene, tileSize } from './Game'
 
 const SPEED = 250
 const MAX_SPEED = 100
-const JUMP_HEIGHT = 200
+const JUMP_HEIGHT = 180
 const DRAG = 220
 const AIR_CONTROL_PERCENT = 0.3
 const ROLL_SPEED = 200
@@ -71,14 +71,19 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     if (speed < 5 && this.isRunning) this.isRunning = false
 
-    if (body.velocity.y > 0 && this.anims.currentAnim!.key !== 'player-jump3') {
+    if (
+      !this.onSlope &&
+      !this.isRolling &&
+      body.velocity.y > 0 &&
+      this.anims.currentAnim!.key !== 'player-jump3'
+    ) {
       this.play({ key: 'player-jump3' }, true)
     }
 
     if (this.onGround) {
       const shouldStartCrouch =
         isHoldingDown && !this.isCrouching && !this.isExitingCrouch && speed < 5
-      const shouldEndCrouch = isHoldingDown && speed < 5
+      const shouldEndCrouch = !isHoldingDown && this.isCrouching && speed < 5
       const shouldRoll = isHoldingDown && this.isRunning && speed > 80
 
       const shouldStartSkid =
@@ -92,10 +97,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
       if (shouldRoll) this.roll()
       if (shouldStartCrouch) {
-        if (!this.isCrouching && !this.isExitingCrouch) {
-          this.isCrouching = true
-          this.play('player-crouch', true)
-        }
+        this.isCrouching = true
+        this.play('player-crouch', true)
       }
       if (shouldEndCrouch) {
         this.isExitingCrouch = true
@@ -110,11 +113,26 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       if (shouldStopSkid) this.isSkidding = false
 
       if (this.onSlope) {
-        this.setFlipX(this.slopeDirection < 0)
-        this.body.setAccelerationX(this.slopeDirection * -100)
-        if (moveDir !== this.slopeDirection) this.body.setMaxVelocity(40, 1000)
-        this.setDrag(9)
-        this.play('player-slope-slide')
+        // force roll when pressing down on slope
+        if (!this.isRolling && isHoldingDown) {
+          this.body.velocity.x *= 0.4
+          this.rollDirection = this.slopeDirection
+        }
+        const isRolling = this.rollDirection !== 0
+        const isAgainst = moveDir !== this.slopeDirection
+        const dx = isRolling && isAgainst ? -250 : -100
+        const mx = isAgainst ? (isRolling ? 80 : 40) : MAX_SPEED
+        this.setFlipX(isRolling ? moveDir === -1 : this.slopeDirection < 0)
+        this.setDrag(isRolling ? 0 : 9)
+        this.body.setAccelerationX(this.slopeDirection * dx)
+        this.body.setMaxVelocity(mx, 1000)
+
+        if (isRolling) {
+          this.play({ key: 'player-roll', frameRate: 8 }, true)
+          this.once('animationcomplete', this.onRollComplete)
+        } else {
+          this.play('player-slope-slide', true)
+        }
       }
 
       if (
@@ -163,17 +181,33 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   handleSlope() {
     let slopeDirection = 0
+    const v = this.body.velocity.x
+    const moveDir = v > 5 ? 1 : v < -5 ? -1 : 0
+
+    if (this.body.velocity.y < 0) return
 
     for (const tile of this.getAdjacentTiles()) {
       if (tile?.index !== 4 && tile?.index !== 5) continue
       const slopeY = this.getSlope(tile)
       if (!slopeY) continue
 
-      if (this.slopeDirection === 0) this.body.velocity.x *= 0.8
-
       slopeDirection = tile?.index === 4 ? 1 : -1
-      this.y = Math.round(slopeY)
-      this.body.setVelocityY(0)
+
+      if (this.slopeDirection === 0) {
+        if (
+          this.body.velocity.y > 10 ||
+          (Math.abs(this.body.velocity.x) > 70 && moveDir !== slopeDirection)
+        )
+          this.rollDirection = slopeDirection
+
+        this.body.velocity.x *= 0.8
+      }
+
+      const t = Math.abs(Math.round(slopeY) - this.y)
+      if (t < 3) {
+        this.y = Math.round(slopeY)
+        this.body.setVelocityY(0)
+      }
 
       break
     }
@@ -202,9 +236,24 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   jump = () => {
-    if (!this.onGround || !this.canInput || this.onSlope) return
+    if (
+      !this.onGround ||
+      this.isRolling ||
+      this.isCrouching ||
+      this.isExitingCrouch
+    )
+      return
+
     this.scene.time.delayedCall(10, () => this.play('player-jump'))
-    this.body.setVelocityY(-(JUMP_HEIGHT * (this.isRunning ? 1.1 : 0.9)))
+
+    // jump off of slope
+    if (this.onSlope) {
+      this.body.setVelocityX(this.slopeDirection * -25)
+      this.body.setVelocityY(-(JUMP_HEIGHT / 1.5))
+      this.slopeDirection = 0
+    } else {
+      this.body.setVelocityY(-JUMP_HEIGHT)
+    }
   }
 
   // crouch/roll
@@ -234,6 +283,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   onRollComplete = () => {
+    if (this.onSlope) return
     this.rollDirection = 0
     this.play('player-idle')
   }
