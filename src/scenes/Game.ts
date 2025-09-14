@@ -2,6 +2,7 @@ import { Scene } from 'phaser'
 import { Player } from './Player'
 
 export const tileSize = 16
+const timeScale = 1
 
 export class GameScene extends Scene {
   player: Player
@@ -18,6 +19,10 @@ export class GameScene extends Scene {
   }
 
   create() {
+    this.time.timeScale = timeScale
+    this.anims.globalTimeScale = timeScale
+    this.physics.world.timeScale = 1 / timeScale
+
     this.loadMap()
 
     this.player = new Player(this)
