@@ -1,11 +1,14 @@
 import { GameScene } from './Game'
 
-const SPEED = 80
+const SPEED = 250
+const MAX_SPEED = 100
 const JUMP_HEIGHT = 200
-const DRAG = 300
+const DRAG = 220
+const AIR_CONTROL_PERCENT = 0.3
 export class Player extends Phaser.Physics.Arcade.Sprite {
   player: Phaser.Physics.Arcade.Sprite
   scene: GameScene
+  fallFlag = false
 
   constructor(scene: GameScene) {
     const spawn = scene.map.findObject('Spawn', (o) => o.name === 'spawn') ?? {
@@ -24,25 +27,53 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       .setBodySize(12, 20)
       .setOffset(10, 12)
       .setFlipX(!!flip)
+      .setMaxVelocity(MAX_SPEED, 1000)
   }
 
   update() {
     const body = this.body as Phaser.Physics.Arcade.Body
 
     if (body.blocked.down) {
-      this.play('player-walk', true).setDrag(DRAG, 0)
+      this.setDrag(DRAG, 0)
+      this.fallFlag = false
+      if (body.velocity.x === 0) {
+        this.play({ key: 'player-idle', frameRate: 4 }, true)
+      } else {
+        if (Math.abs(body.velocity.x) > 80) {
+          this.play({ key: 'player-run', frameRate: 8 }, true)
+        } else {
+          this.play({ key: 'player-walk', frameRate: 8 }, true)
+        }
+      }
     } else {
-      this.play('player-jump').setDrag(0, 0)
+      this.setDrag(0)
+      if (body.velocity.y < 0) {
+        this.play('player-jump', true)
+      } else if (!this.fallFlag) {
+        this.fallFlag = true
+        this.play({ key: 'player-jump3' }, true)
+      }
     }
 
-    if (this.scene.cursors.left.isDown && body.blocked.down) {
-      body.setVelocityX(-SPEED)
-      this.setFlipX(false)
-    } else if (this.scene.cursors.right.isDown && body.blocked.down) {
-      body.setVelocityX(SPEED)
+    body.setAccelerationX(0)
+
+    const isOnGround = body.blocked.down
+    const controlMultiplier = isOnGround ? 1.0 : AIR_CONTROL_PERCENT
+
+    if (this.scene.cursors.left.isDown) {
       this.setFlipX(true)
-    } else if (body.blocked.down) {
-      this.play('player-stand')
+      if (isOnGround) {
+        body.setAccelerationX(body.velocity.x <= 0 ? -SPEED : 0)
+      } else {
+        body.setAccelerationX(-SPEED * controlMultiplier)
+      }
+    } else if (this.scene.cursors.right.isDown) {
+      this.setFlipX(false)
+      if (isOnGround) {
+        body.setAccelerationX(body.velocity.x >= 0 ? SPEED : 0)
+      } else {
+        body.setAccelerationX(SPEED * controlMultiplier)
+      }
     }
   }
   jump = () => {
