@@ -17,6 +17,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   rollDirection = 0
   isCrouching = false
   isExitingCrouch = false
+  isPullingUp = false
+  hangingLedge: { x: number; y: number; direction: number } | null = null
 
   constructor(scene: GameScene) {
     const spawn = scene.map.findObject('Spawn', (o) => o.name === 'spawn') ?? {
@@ -41,6 +43,20 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   update() {
     const body = this.body as Phaser.Physics.Arcade.Body
     const c = this.scene.cursors
+
+    this.setDepth(this.hangingLedge ? -1 : 10)
+
+    if (this.hangingLedge) {
+      body.setVelocity(0, 0).setAcceleration(0, 0)
+
+      this.x = this.hangingLedge.x
+      this.y = this.hangingLedge.y
+      if (!this.isPullingUp) {
+        if (this.scene.xKey.isDown) this.startPullUp()
+        if (c.down.isDown) this.dropFromHang()
+      }
+      return
+    }
 
     if (this.isRolling) {
       this.setFlipX(this.rollDirection < 0)
@@ -112,6 +128,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.isCrouching = false // Can't crouch in air
       this.isExitingCrouch = false // Cancel crouch exit in air
       this.isRolling = false // Cancel roll in air
+
+      if (!this.hangingLedge && body.velocity.y > 0) this.detectLedge()
       if (body.velocity.y < 0) {
         this.play('player-jump', true)
       } else if (!this.fallFlag) {
@@ -122,7 +140,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     body.setAccelerationX(0)
 
-    if (this.isRolling || this.isCrouching || this.isExitingCrouch) return
+    if (!this.getIsFree()) return
 
     const isOnGround = body.blocked.down
     const controlMultiplier = isOnGround ? 1.0 : AIR_CONTROL_PERCENT
@@ -192,13 +210,64 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.play('player-idle', true)
   }
 
+  detectLedge = (): { x: number; y: number; direction: number } | null => {
+    const body = this.body as Phaser.Physics.Arcade.Body
+
+    const touchingLeft = body.touching.left || body.blocked.left
+    const touchingRight = body.touching.right || body.blocked.right
+
+    if (touchingLeft || touchingRight) {
+      const direction = touchingLeft ? -1 : 1
+
+      this.grabLedge({
+        x: this.x + (touchingLeft ? -9 : 9),
+        y: this.y + 7,
+        direction: direction,
+      })
+    }
+
+    return null
+  }
+
+  grabLedge = (ledge: { x: number; y: number; direction: number }) => {
+    const body = this.body as Phaser.Physics.Arcade.Body
+
+    this.hangingLedge = {
+      x: ledge.x + (ledge.direction > 0 ? 3 : -3),
+      y: ledge.y - 18,
+      direction: ledge.direction,
+    }
+    body.setVelocity(0, 0).setAcceleration(0, 0)
+    this.setFlipX(ledge.direction < 0).play('player-hang', true)
+  }
+
+  startPullUp = () => {
+    if (!this.hangingLedge || this.isPullingUp) return
+
+    this.isPullingUp = true
+    this.play({ key: 'player-pull-up', frameRate: 7 })
+    this.once('animationcomplete', this.dropFromHang)
+  }
+
+  dropFromHang = () => {
+    this.isPullingUp = false
+    this.hangingLedge = null
+  }
+
+  getIsFree = () => {
+    const notCrouched = !this.isCrouching && !this.isExitingCrouch
+    const notHanging = !this.hangingLedge && !this.isPullingUp
+    return notCrouched && notHanging && !this.isRolling
+  }
+
   toggleRunning = () => {
     this.isRunning = true
   }
 
   jump = () => {
     const body = this.body as Phaser.Physics.Arcade.Body
-    if (body.blocked.down && !this.isCrouching && !this.isExitingCrouch) {
+
+    if (body.blocked.down && this.getIsFree()) {
       this.scene.time.delayedCall(10, () => {
         this.play('player-jump')
       })

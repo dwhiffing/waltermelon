@@ -25,9 +25,14 @@ export class GameScene extends Scene {
     this.zKey.on('down', this.player.jump, this)
     this.xKey.on('down', this.player.toggleRunning, this)
 
-    this.physics.add.collider(this.player, this.layer)
+    this.physics.add.collider(
+      this.player,
+      this.layer,
+      () => {},
+      () => !this.player.isHanging,
+    )
     this.physics.add.overlap(this.player, this.coins, this.collectCoin)
-    this.cameras.main.startFollow(this.player)
+    this.cameras.main.startFollow(this.player, false, 1, 1, 0, 20)
   }
 
   update() {
