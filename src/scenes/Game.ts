@@ -33,7 +33,7 @@ export class GameScene extends Scene {
       this.player,
       this.layer,
       () => {},
-      () => !this.player.isHanging,
+      () => !this.player.hangingLedge && !this.player.onSlope,
     )
     this.physics.add.overlap(this.player, this.coins, this.collectCoin)
     this.cameras.main.startFollow(this.player, false, 1, 1, 0, 20)
@@ -48,7 +48,7 @@ export class GameScene extends Scene {
     this.map = this.make.tilemap({ key: 'map', tileWidth: 32, tileHeight: 32 })
     const tileset = this.map.addTilesetImage('tiles')!
     this.layer = this.map.createLayer('Level', tileset)!
-    this.map.setCollision([1, 2, 3, 4, 5, 6, 7, 8])
+    this.map.setCollision([1, 2, 3, 6, 7, 8, 9, 13, 14, 15])
 
     this.coins = this.physics.add.group()
     this.map.getObjectLayer('Coins')!.objects.forEach(({ x, y }) => {
@@ -69,7 +69,7 @@ export class GameScene extends Scene {
   drawTilePhysicsBodies() {
     this.debugGraphics.clear()
 
-    // const adjacent = this.player.getAdjacentTiles()
+    const adjacent = this.player.getAdjacentTiles()
 
     for (let x = 0; x < this.map.width; x++) {
       for (let y = 0; y < this.map.height; y++) {
@@ -77,8 +77,7 @@ export class GameScene extends Scene {
         if (!tile || (!tile?.collides && tile.index !== 4 && tile.index !== 5))
           continue
 
-        const color = 0xff0000
-        // const color = adjacent.includes(tile) ? 0x00ff00 : 0xff0000
+        const color = adjacent.includes(tile) ? 0x00ff00 : 0xff0000
         const worldX = x * tileSize
         const worldY = y * tileSize
         this.debugGraphics.lineStyle(1, color, 0.8)

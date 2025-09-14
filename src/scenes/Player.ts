@@ -1,4 +1,4 @@
-import { GameScene } from './Game'
+import { GameScene, tileSize } from './Game'
 
 const SPEED = 250
 const MAX_SPEED = 100
@@ -7,14 +7,13 @@ const DRAG = 220
 const AIR_CONTROL_PERCENT = 0.3
 const ROLL_SPEED = 200
 export class Player extends Phaser.Physics.Arcade.Sprite {
-  player: Phaser.Physics.Arcade.Sprite
+  declare body: Phaser.Physics.Arcade.Body
   scene: GameScene
-  fallFlag = false
   previousDirection = 0
-  isSkidding = false
-  isRolling = false
-  isRunning = false
   rollDirection = 0
+  slopeDirection = 0
+  isSkidding = false
+  isRunning = false
   isCrouching = false
   isExitingCrouch = false
   isPullingUp = false
@@ -42,7 +41,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   update() {
     const body = this.body as Phaser.Physics.Arcade.Body
-    const c = this.scene.cursors
+    const isHoldingDown = this.scene.cursors.down.isDown
+    const v = body.velocity.x
+    const speed = Math.abs(v)
+    const moveDir = v > 5 ? 1 : v < -5 ? -1 : 0
 
     this.setDepth(this.hangingLedge ? -1 : 10)
 
@@ -53,123 +55,156 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.y = this.hangingLedge.y
       if (!this.isPullingUp) {
         if (this.scene.xKey.isDown) this.startPullUp()
-        if (c.down.isDown) this.dropFromHang()
+        if (isHoldingDown) this.dropFromHang()
       }
       return
     }
+    // if (!this.hangingLedge && !this.onGround && body.velocity.y > 0) this.detectLedge()
 
-    if (this.isRolling) {
-      this.setFlipX(this.rollDirection < 0)
-      return
+    // update states and animations
+    this.setDrag(
+      this.onGround && !this.isRolling ? (this.isRunning ? DRAG : DRAG * 2) : 0,
+      0,
+    )
+
+    if (!this.onSlope && !this.isRolling) this.body.setAccelerationX(0)
+
+    if (speed < 5 && this.isRunning) this.isRunning = false
+
+    if (body.velocity.y > 0 && this.anims.currentAnim!.key !== 'player-jump3') {
+      this.play({ key: 'player-jump3' }, true)
     }
 
-    if (body.blocked.down) {
-      this.setDrag(this.isRunning ? DRAG : DRAG * 2, 0)
-      this.fallFlag = false
+    if (this.onGround) {
+      const shouldStartCrouch =
+        isHoldingDown && !this.isCrouching && !this.isExitingCrouch && speed < 5
+      const shouldEndCrouch = isHoldingDown && speed < 5
+      const shouldRoll = isHoldingDown && this.isRunning && speed > 80
 
-      const inputDir = c.left.isDown ? -1 : c.right.isDown ? 1 : 0
-      const moveDir = body.velocity.x > 5 ? 1 : body.velocity.x < -5 ? -1 : 0
+      const shouldStartSkid =
+        !this.isSkidding &&
+        !this.isRolling &&
+        this.isRunning &&
+        this.isChangingDirection
+      const shouldStopSkid =
+        this.isSkidding &&
+        (this.inputDirection === moveDir || Math.abs(body.velocity.x) < 5)
 
-      if (c.down.isDown && Math.abs(body.velocity.x) < 5) {
+      if (shouldRoll) this.roll()
+      if (shouldStartCrouch) {
         if (!this.isCrouching && !this.isExitingCrouch) {
           this.isCrouching = true
           this.play('player-crouch', true)
         }
       }
-      if (c.down.isDown && this.isRunning && Math.abs(body.velocity.x) > 80) {
-        this.roll()
-      }
-      if (!c.down.isDown && this.isCrouching && !this.isExitingCrouch) {
+      if (shouldEndCrouch) {
         this.isExitingCrouch = true
         this.play({ key: 'player-uncrouch' }, true)
         this.once('animationcomplete', this.onCrouchExitComplete)
       }
 
-      if (
-        this.isRunning &&
-        inputDir !== 0 &&
-        moveDir !== 0 &&
-        inputDir !== moveDir
-      ) {
-        if (!this.isSkidding) {
-          this.isSkidding = true
-          this.play('player-skid', true)
-        }
-      } else {
-        if (
-          this.isSkidding &&
-          (inputDir === moveDir || Math.abs(body.velocity.x) < 5)
-        ) {
-          this.isSkidding = false
-        }
+      if (shouldStartSkid) {
+        this.isSkidding = true
+        this.play('player-skid', true)
+      }
+      if (shouldStopSkid) this.isSkidding = false
+
+      if (this.onSlope) {
+        this.setFlipX(this.slopeDirection < 0)
+        this.body.setAccelerationX(this.slopeDirection * -100)
+        if (moveDir !== this.slopeDirection) this.body.setMaxVelocity(40, 1000)
+        this.setDrag(9)
+        this.play('player-slope-slide')
       }
 
       if (
         !this.isSkidding &&
         !this.isCrouching &&
         !this.isExitingCrouch &&
-        !this.isRolling
+        !this.isRolling &&
+        !this.onSlope
       ) {
-        if (body.velocity.x === 0) {
-          this.isRunning = false // Stop running when velocity hits 0
-          this.play({ key: 'player-idle', frameRate: 4 }, true)
-        } else {
-          // Play run or walk animation based on running state
-          if (this.isRunning && Math.abs(body.velocity.x) > 5) {
-            this.play({ key: 'player-run', frameRate: 8 }, true)
-          } else {
-            this.play({ key: 'player-walk', frameRate: 8 }, true)
-          }
-        }
-      }
-    } else {
-      this.setDrag(0)
-      this.isSkidding = false // Can't skid in air
-      this.isCrouching = false // Can't crouch in air
-      this.isExitingCrouch = false // Cancel crouch exit in air
-      this.isRolling = false // Cancel roll in air
-
-      if (!this.hangingLedge && body.velocity.y > 0) this.detectLedge()
-      if (body.velocity.y < 0) {
-        this.play('player-jump', true)
-      } else if (!this.fallFlag) {
-        this.fallFlag = true
-        this.play({ key: 'player-jump3' }, true)
+        const key = `player-${
+          speed === 0 ? 'idle' : this.isRunning ? 'run' : 'walk'
+        }`
+        this.play({ key, frameRate: speed === 0 ? 4 : 8 }, true)
       }
     }
 
-    body.setAccelerationX(0)
+    this.handleInput()
+    this.handleSlope()
+  }
 
-    if (!this.getIsFree()) return
+  handleInput = () => {
+    if (!this.canInput) return
 
-    const isOnGround = body.blocked.down
-    const controlMultiplier = isOnGround ? 1.0 : AIR_CONTROL_PERCENT
+    let speed = this.isRunning ? SPEED : SPEED * 0.5
+    let maxSpeed = this.isRunning ? MAX_SPEED : MAX_SPEED * 0.5
 
-    const speed = this.isRunning ? SPEED : SPEED * 0.5
+    this.setMaxVelocity(maxSpeed, 1000)
 
-    this.setMaxVelocity(this.isRunning ? MAX_SPEED : MAX_SPEED * 0.5, 1000)
-
+    const controlMultiplier = this.isChangingDirection
+      ? 0
+      : this.onGround
+      ? 1
+      : AIR_CONTROL_PERCENT
     if (this.scene.cursors.left.isDown) {
       this.setFlipX(true)
       this.previousDirection = -1
-      if (isOnGround) {
-        body.setAccelerationX(body.velocity.x <= 0 ? -speed : 0)
-      } else {
-        body.setAccelerationX(-speed * controlMultiplier)
-      }
+      this.body.setAccelerationX(-speed * controlMultiplier)
     } else if (this.scene.cursors.right.isDown) {
       this.setFlipX(false)
       this.previousDirection = 1
-      if (isOnGround) {
-        body.setAccelerationX(body.velocity.x >= 0 ? speed : 0)
-      } else {
-        body.setAccelerationX(speed * controlMultiplier)
-      }
+      this.body.setAccelerationX(speed * controlMultiplier)
     } else {
       this.previousDirection = 0
     }
   }
 
+  handleSlope() {
+    let slopeDirection = 0
+
+    for (const tile of this.getAdjacentTiles()) {
+      if (tile?.index !== 4 && tile?.index !== 5) continue
+      const slopeY = this.getSlope(tile, this.body.x + this.body.width / 2)
+      if (!slopeY) continue
+
+      if (this.slopeDirection === 0) this.body.velocity.x *= 0.8
+
+      slopeDirection = tile?.index === 4 ? 1 : -1
+      this.y = Math.round(slopeY)
+      this.body.setVelocityY(0)
+
+      break
+    }
+
+    this.slopeDirection = slopeDirection
+  }
+
+  getSlope(tile: Phaser.Tilemaps.Tile, x: number): number | null {
+    const tx = tile.x * tileSize
+    const ty = tile.y * tileSize
+
+    if (x < tx || x > tx + tileSize) return null
+
+    const relativeX = (x - tx) / tileSize
+
+    if (tile.index === 4) {
+      return ty + tileSize - relativeX * tileSize
+    } else if (tile.index === 5) {
+      return ty + relativeX * tileSize
+    }
+
+    return null
+  }
+
+  jump = () => {
+    if (!this.onGround || !this.canInput || this.onSlope) return
+    this.scene.time.delayedCall(10, () => this.play('player-jump'))
+    this.body.setVelocityY(-(JUMP_HEIGHT * (this.isRunning ? 1.1 : 0.9)))
+  }
+
+  // crouch/roll
   roll = () => {
     const body = this.body as Phaser.Physics.Arcade.Body
 
@@ -188,20 +223,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         ? -1
         : 1
 
-    this.isRolling = true
-    this.isSkidding = false
-
     body.setVelocityX(this.rollDirection * ROLL_SPEED)
 
     this.setDrag(0, 0)
-      .play('player-roll')
+      .play({ key: 'player-roll', frameRate: 10 })
       .once('animationcomplete', this.onRollComplete)
   }
 
   onRollComplete = () => {
-    this.isRolling = false
     this.rollDirection = 0
-    this.setDrag(DRAG, 0).play('player-idle')
+    this.play('player-idle')
   }
 
   onCrouchExitComplete = () => {
@@ -210,6 +241,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.play('player-idle', true)
   }
 
+  // ledges
   detectLedge = (): { x: number; y: number; direction: number } | null => {
     const body = this.body as Phaser.Physics.Arcade.Body
 
@@ -254,25 +286,61 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.hangingLedge = null
   }
 
-  getIsFree = () => {
-    const notCrouched = !this.isCrouching && !this.isExitingCrouch
-    const notHanging = !this.hangingLedge && !this.isPullingUp
-    return notCrouched && notHanging && !this.isRolling
+  // misc
+
+  getAdjacentTiles() {
+    const body = this.body
+    const centerTileX = Math.floor((body.x + body.width / 2) / tileSize)
+    const bottomTileY = Math.floor((body.y + body.height - 2) / tileSize)
+
+    let tiles = []
+
+    for (let x = centerTileX - 1; x <= centerTileX + 1; x++) {
+      for (let y = bottomTileY; y <= bottomTileY + 1; y++) {
+        const tile = this.scene.layer.getTileAt(x, y)
+        if (tile) tiles.push(tile)
+      }
+    }
+    return tiles
   }
 
   toggleRunning = () => {
+    if (this.onSlope) return
     this.isRunning = true
   }
 
-  jump = () => {
-    const body = this.body as Phaser.Physics.Arcade.Body
+  get canInput() {
+    const notCrouched = !this.isCrouching && !this.isExitingCrouch
+    const notHanging = !this.hangingLedge && !this.isPullingUp
+    return notCrouched && notHanging && !this.isRolling && !this.onSlope
+  }
 
-    if (body.blocked.down && this.getIsFree()) {
-      this.scene.time.delayedCall(10, () => {
-        this.play('player-jump')
-      })
-      body.setVelocityY(-(JUMP_HEIGHT * (this.isRunning ? 1.1 : 0.9)))
-    }
+  get onGround() {
+    return this.body.blocked.down || this.onSlope
+  }
+
+  get isRolling() {
+    return this.rollDirection !== 0
+  }
+
+  get onSlope() {
+    return this.slopeDirection !== 0
+  }
+
+  get inputDirection() {
+    return this.scene.cursors.left.isDown
+      ? -1
+      : this.scene.cursors.right.isDown
+      ? 1
+      : 0
+  }
+
+  get isChangingDirection() {
+    return (
+      this.inputDirection !== 0 &&
+      this.previousDirection !== 0 &&
+      this.inputDirection !== this.previousDirection
+    )
   }
 }
 
