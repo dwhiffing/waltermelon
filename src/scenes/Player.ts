@@ -7,6 +7,7 @@ const DRAG = 220
 const AIR_CONTROL_PERCENT = 0.3
 const ROLL_SPEED = 200
 export class Player extends Phaser.Physics.Arcade.Sprite {
+  dust: Phaser.GameObjects.Sprite
   declare body: Phaser.Physics.Arcade.Body
   scene: GameScene
   previousDirection = 0
@@ -37,6 +38,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       .setOffset(10, 12)
       .setFlipX(!!flip)
       .setMaxVelocity(MAX_SPEED, 1000)
+
+    this.dust = this.scene.add
+      .sprite(0, 0, 'dust')
+      .play({ key: 'dust-walk', repeat: -1 }, true)
   }
 
   update() {
@@ -45,6 +50,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const v = body.velocity.x
     const speed = Math.abs(v)
     const moveDir = v > 5 ? 1 : v < -5 ? -1 : 0
+
+    this.dust
+      .setFlipX(this.flipX)
+      .setPosition(this.x + (this.flipX ? 8 : -8), this.y - 16)
+      .setVisible(this.isSkidding)
 
     this.setDepth(this.hangingLedge ? -1 : 10)
 
