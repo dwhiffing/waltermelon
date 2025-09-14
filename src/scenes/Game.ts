@@ -1,6 +1,8 @@
 import { Scene } from 'phaser'
 import { Player } from './Player'
 
+export const tileSize = 16
+
 export class GameScene extends Scene {
   player: Player
   cursors: Phaser.Types.Input.Keyboard.CursorKeys
@@ -9,6 +11,7 @@ export class GameScene extends Scene {
   map: Phaser.Tilemaps.Tilemap
   layer: Phaser.Tilemaps.TilemapLayer
   coins: Phaser.Physics.Arcade.Group
+  debugGraphics: Phaser.GameObjects.Graphics
 
   constructor() {
     super('Game')
@@ -18,6 +21,7 @@ export class GameScene extends Scene {
     this.loadMap()
 
     this.player = new Player(this)
+    this.debugGraphics = this.add.graphics()
 
     this.cursors = this.input.keyboard!.createCursorKeys()
     this.zKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.Z)
@@ -37,6 +41,7 @@ export class GameScene extends Scene {
 
   update() {
     this.player.update()
+    if (this.physics.config.debug) this.drawTilePhysicsBodies()
   }
 
   loadMap() {
@@ -59,6 +64,30 @@ export class GameScene extends Scene {
   collectCoin = (_player: any, coin: any) => {
     this.coins.remove(coin)
     coin.destroy()
+  }
+
+  drawTilePhysicsBodies() {
+    this.debugGraphics.clear()
+
+    // const adjacent = this.player.getAdjacentTiles()
+
+    for (let x = 0; x < this.map.width; x++) {
+      for (let y = 0; y < this.map.height; y++) {
+        const tile = this.layer.getTileAt(x, y)
+        if (!tile || (!tile?.collides && tile.index !== 4 && tile.index !== 5))
+          continue
+
+        const color = 0xff0000
+        // const color = adjacent.includes(tile) ? 0x00ff00 : 0xff0000
+        const worldX = x * tileSize
+        const worldY = y * tileSize
+        this.debugGraphics.lineStyle(1, color, 0.8)
+        this.debugGraphics
+          .fillStyle(color, 0.2)
+          .fillRect(worldX, worldY, tileSize, tileSize)
+          .strokeRect(worldX, worldY, tileSize, tileSize)
+      }
+    }
   }
 
   asyncCall = (time: number) =>
