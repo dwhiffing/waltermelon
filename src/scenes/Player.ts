@@ -22,6 +22,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   isLanding = false
   isCrouching = false
   isExitingCrouch = false
+  isStartingCrouch = false
   isPullingUp = false
   hangingLedge: { x: number; y: number; direction: number } | null = null
 
@@ -97,9 +98,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     if (this.onGround) {
-      const shouldStartCrouch =
+      let shouldStartCrouch =
         isHoldingDown && !this.isCrouching && !this.isExitingCrouch && speed < 5
-      const shouldEndCrouch = !isHoldingDown && this.isCrouching && speed < 5
+      const shouldEndCrouch =
+        !isHoldingDown &&
+        !this.isStartingCrouch &&
+        this.isCrouching &&
+        speed < 5
       const shouldRoll = isHoldingDown && this.isRunning && speed > 80
 
       const shouldStartSkid =
@@ -113,7 +118,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       if (shouldRoll) this.roll()
       if (shouldStartCrouch) {
         this.isCrouching = true
-        this.play('player-crouch', true)
+        this.isStartingCrouch = true
+        this.play({ key: 'player-crouch', frameRate: 8 }, true)
+        this.once('animationcomplete', () => (this.isStartingCrouch = false))
       }
       if (shouldEndCrouch) {
         this.isExitingCrouch = true
