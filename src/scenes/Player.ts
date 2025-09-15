@@ -24,6 +24,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   isExitingCrouch = false
   isStartingCrouch = false
   isPullingUp = false
+  lastVelocity = 0
   hangingLedge: { x: number; y: number; direction: number } | null = null
 
   constructor(scene: GameScene) {
@@ -115,6 +116,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       const shouldStopSkid =
         this.isSkidding && (this.inputDirection === moveDir || speed < 5)
 
+      if (this.anims.currentAnim!.key === 'player-jump3') {
+        const isFast = this.lastVelocity > 200
+        this.play(
+          { key: isFast ? 'player-uncrouch' : 'player-land', frameRate: 6 },
+          true,
+        )
+        this.once('animationcomplete', () => (this.isLanding = false))
+        this.isLanding = true
+      }
+
       if (shouldRoll) this.roll()
       if (shouldStartCrouch) {
         this.isCrouching = true
@@ -126,12 +137,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.isExitingCrouch = true
         this.play({ key: 'player-uncrouch' }, true)
         this.once('animationcomplete', this.onCrouchExitComplete)
-      }
-
-      if (this.anims.currentAnim!.key === 'player-jump3') {
-        this.play({ key: 'player-land', frameRate: 6 }, true)
-        this.once('animationcomplete', () => (this.isLanding = false))
-        this.isLanding = true
       }
 
       if (shouldStartSkid) {
@@ -180,6 +185,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     this.handleInput()
     this.handleSlope()
+    this.lastVelocity = vy
   }
 
   handleInput = () => {

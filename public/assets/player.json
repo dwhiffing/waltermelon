@@ -470,14 +470,6 @@
     "spriteSourceSize": { "x": 0, "y": 0, "w": 32, "h": 64 },
     "sourceSize": { "w": 32, "h": 64 },
     "duration": 100
-   },
-   "59": {
-    "frame": { "x": 1888, "y": 0, "w": 32, "h": 64 },
-    "rotated": false,
-    "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 32, "h": 64 },
-    "sourceSize": { "w": 32, "h": 64 },
-    "duration": 100
    }
  },
  "meta": {
@@ -485,7 +477,7 @@
   "version": "1.3.15.2-arm64",
   "image": "player.png",
   "format": "I8",
-  "size": { "w": 1920, "h": 64 },
+  "size": { "w": 1888, "h": 64 },
   "scale": "1",
   "frameTags": [
    { "name": "player-walk", "from": 0, "to": 5, "direction": "forward", "color": "#000000ff" },
@@ -493,18 +485,18 @@
    { "name": "player-jump2", "from": 10, "to": 15, "direction": "forward", "color": "#000000ff" },
    { "name": "player-jump", "from": 13, "to": 13, "direction": "forward", "color": "#000000ff" },
    { "name": "player-jump3", "from": 14, "to": 15, "direction": "forward", "repeat": "1", "color": "#000000ff" },
-   { "name": "player-land", "from": 16, "to": 19, "direction": "forward", "color": "#000000ff" },
-   { "name": "player-run", "from": 20, "to": 25, "direction": "forward", "color": "#000000ff" },
-   { "name": "player-wallslide", "from": 26, "to": 29, "direction": "forward", "color": "#000000ff" },
-   { "name": "player-skid", "from": 30, "to": 30, "direction": "forward", "color": "#000000ff" },
-   { "name": "player-roll", "from": 31, "to": 36, "direction": "forward", "color": "#000000ff" },
-   { "name": "player-roll-loop", "from": 32, "to": 36, "direction": "forward", "color": "#000000ff" },
-   { "name": "player-crouch", "from": 37, "to": 40, "direction": "forward", "color": "#000000ff" },
-   { "name": "player-uncrouch", "from": 37, "to": 40, "direction": "reverse", "color": "#000000ff" },
-   { "name": "player-hang", "from": 41, "to": 44, "direction": "forward", "color": "#000000ff" },
-   { "name": "player-pull-up", "from": 45, "to": 50, "direction": "forward", "color": "#000000ff" },
-   { "name": "player-slope-slide", "from": 51, "to": 54, "direction": "forward", "color": "#000000ff" },
-   { "name": "player-happy", "from": 55, "to": 59, "direction": "pingpong", "color": "#000000ff" }
+   { "name": "player-land", "from": 16, "to": 18, "direction": "forward", "color": "#000000ff" },
+   { "name": "player-run", "from": 19, "to": 24, "direction": "forward", "color": "#000000ff" },
+   { "name": "player-wallslide", "from": 25, "to": 28, "direction": "forward", "color": "#000000ff" },
+   { "name": "player-skid", "from": 29, "to": 29, "direction": "forward", "color": "#000000ff" },
+   { "name": "player-roll", "from": 30, "to": 35, "direction": "forward", "color": "#000000ff" },
+   { "name": "player-roll-loop", "from": 31, "to": 35, "direction": "forward", "color": "#000000ff" },
+   { "name": "player-crouch", "from": 36, "to": 39, "direction": "forward", "color": "#000000ff" },
+   { "name": "player-uncrouch", "from": 36, "to": 39, "direction": "reverse", "color": "#000000ff" },
+   { "name": "player-hang", "from": 40, "to": 43, "direction": "forward", "color": "#000000ff" },
+   { "name": "player-pull-up", "from": 44, "to": 49, "direction": "forward", "color": "#000000ff" },
+   { "name": "player-slope-slide", "from": 50, "to": 53, "direction": "forward", "color": "#000000ff" },
+   { "name": "player-happy", "from": 54, "to": 58, "direction": "pingpong", "color": "#000000ff" }
   ]
  }
 }
