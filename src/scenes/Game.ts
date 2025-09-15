@@ -74,10 +74,18 @@ export class GameScene extends Scene {
     this.coins = this.physics.add.group()
     this.map.getObjectLayer('Coins')!.objects.forEach(({ x, y }) => {
       const coin = this.physics.add
-        .sprite(x!, y!, 'coin')
+        .sprite(x!, y! - 2, 'coin')
         .setOrigin(0, 1)
         .setBodySize(10, 10)
       this.coins.add(coin)
+      this.tweens.add({
+        targets: coin,
+        y: y! - 4,
+        duration: 400,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      })
       coin.body.setAllowGravity(false)
     })
   }
