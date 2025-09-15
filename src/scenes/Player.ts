@@ -74,8 +74,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.body.x = this.hangingLedge.x
       this.body.y = this.hangingLedge.y
       if (!this.isPullingUp) {
-        if (this.scene.xKey.isDown) this.startPullUp()
-        if (isHoldingDown) this.dropFromHang()
+        const c = this.scene.cursors
+        const l = this.hangingLedge.direction === 1
+        const toward = l ? c.right.isDown : c.left.isDown
+        const away = l ? c.left.isDown : c.right.isDown
+
+        if (toward || this.scene.zKey.isDown) this.startPullUp()
+        if (away || isHoldingDown) this.dropFromHang()
       }
       return
     }
@@ -357,21 +362,29 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   // ledges
   handleLedge = () => {
-    const touchingLeft = this.body.blocked.left
-    const touchingRight = this.body.blocked.right
-
     const tile = this.getAdjacentTiles()[0]
-    if ((touchingLeft || touchingRight) && tile) {
-      if (this.scene.layer.getTileAt(tile.x, tile.y - 1)) return
-      const dist = Math.abs(tile.pixelY - this.y)
-      if (dist > 4) return
-      const lx = this.body.x + (touchingLeft ? -2 : 2)
-      const ly = this.body.y + 1
-      const direction = touchingLeft ? -1 : 1
-      this.hangingLedge = { x: lx, y: ly, direction }
-      this.body.setVelocity(0, 0).setAcceleration(0, 0)
-      this.setFlipX(direction < 0).play('player-hang', true)
-    }
+    if (!tile) return
+    // return if there is a tile directly above this tile
+    if (this.scene.layer.getTileAt(tile.x, tile.y - 1)) return
+
+    const distX = Math.abs(tile.pixelX - this.x) - (this.flipX ? 19 : 0)
+    const distY = Math.abs(tile.pixelY - this.y)
+    if (distY > 3 || distX > 4) return
+
+    const playerFacingDirection = this.flipX ? -1 : 1
+    const direction = tile.index === 3 ? -1 : 1
+    if (
+      this.inputDirection !== direction ||
+      playerFacingDirection !== direction
+    )
+      return
+
+    const isLeft = tile.index === 3
+    const lx = tile.pixelX + (isLeft ? 14 : -4)
+    const ly = this.body.y + 1
+    this.hangingLedge = { x: lx, y: ly, direction }
+    this.body.setVelocity(0, 0).setAcceleration(0, 0)
+    this.setFlipX(direction < 0).play('player-hang', true)
   }
 
   startPullUp = () => {
