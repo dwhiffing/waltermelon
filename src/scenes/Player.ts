@@ -19,6 +19,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   slopeDirection = 0
   isSkidding = false
   isRunning = false
+  isLanding = false
   isCrouching = false
   isExitingCrouch = false
   isPullingUp = false
@@ -120,6 +121,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.once('animationcomplete', this.onCrouchExitComplete)
       }
 
+      if (this.anims.currentAnim!.key === 'player-jump3') {
+        this.play({ key: 'player-land', frameRate: 6 }, true)
+        this.once('animationcomplete', () => (this.isLanding = false))
+        this.isLanding = true
+      }
+
       if (shouldStartSkid) {
         this.isSkidding = true
         this.play('player-skid', true)
@@ -154,6 +161,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         !this.isCrouching &&
         !this.isExitingCrouch &&
         !this.isRolling &&
+        !this.isLanding &&
         !this.onSlope
       ) {
         const key = `player-${
@@ -377,7 +385,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   get canInput() {
     const notCrouched = !this.isCrouching && !this.isExitingCrouch
     const notHanging = !this.hangingLedge && !this.isPullingUp
-    return notCrouched && notHanging && !this.isRolling && !this.onSlope
+    return (
+      notCrouched &&
+      notHanging &&
+      !this.isRolling &&
+      !this.onSlope &&
+      !this.isLanding
+    )
   }
 
   get onGround() {
