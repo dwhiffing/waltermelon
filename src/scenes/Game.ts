@@ -49,7 +49,6 @@ export class GameScene extends Scene {
     this.zKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.Z)
     this.xKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.X)
     this.zKey.on('down', this.player.jump, this)
-    this.xKey.on('down', this.player.toggleRunning, this)
 
     this.physics.add.collider(
       this.player,

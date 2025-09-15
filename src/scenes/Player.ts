@@ -1,6 +1,6 @@
 import { GameScene, tileSize } from './Game'
 
-const SPEED = 250
+const SPEED = 150
 const MAX_SPEED = 100
 const JUMP_HEIGHT = 180
 const DRAG = 220
@@ -12,11 +12,12 @@ const SIZE_X = 5
 const SIZE_Y = 20
 const OFFSET_X = 14
 const OFFSET_Y = 31
+const RUN_HOLD_TIME = 1000
 export class Player extends Phaser.Physics.Arcade.Sprite {
   dust: Phaser.GameObjects.Sprite
   declare body: Phaser.Physics.Arcade.Body
   scene: GameScene
-  previousDirection = 0
+  prevInputDirection = 0
   rollDirection = 0
   slopeDirection = 0
   isSkidding = false
@@ -29,6 +30,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   isWallSliding = false
   wallDirection = 0
   lastVelocity = 0
+  walkHoldStartTime = 0
   hangingLedge: { x: number; y: number; direction: number } | null = null
 
   constructor(scene: GameScene) {
@@ -215,6 +217,15 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   handleInput = () => {
     if (!this.canInput) return
 
+    if (this.moveDirection !== this.inputDirection) {
+      this.walkHoldStartTime = this.scene.time.now
+    } else {
+      const holdDuration = this.scene.time.now - this.walkHoldStartTime
+      if (holdDuration >= RUN_HOLD_TIME && !this.isRunning && !this.onSlope) {
+        this.isRunning = true
+      }
+    }
+
     let speed = this.isRunning ? SPEED : SPEED * 0.5
     let maxSpeed = this.isRunning ? MAX_SPEED : MAX_SPEED * 0.5
 
@@ -239,7 +250,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       prevDir = 0
     }
     if (typeof prevDir === 'number')
-      this.scene.time.delayedCall(100, () => (this.previousDirection = prevDir))
+      this.scene.time.delayedCall(
+        100,
+        () => (this.prevInputDirection = prevDir),
+      )
   }
 
   handleSlope() {
@@ -335,8 +349,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       return
 
     this.rollDirection =
-      this.previousDirection !== 0
-        ? this.previousDirection
+      this.prevInputDirection !== 0
+        ? this.prevInputDirection
         : this.flipX
         ? -1
         : 1
@@ -460,11 +474,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     return tiles
   }
 
-  toggleRunning = () => {
-    if (this.onSlope) return
-    this.isRunning = true
-  }
-
   get canInput() {
     const notCrouched = !this.isCrouching && !this.isExitingCrouch
     const notHanging = !this.hangingLedge && !this.isPullingUp
@@ -476,6 +485,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         !this.isLanding) ||
       this.isWallSliding
     )
+  }
+
+  get moveDirection() {
+    return this.body.velocity.x > 0 ? 1 : -1
   }
 
   get onGround() {
@@ -501,8 +514,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   get isChangingDirection() {
     return (
       this.inputDirection !== 0 &&
-      this.previousDirection !== 0 &&
-      this.inputDirection !== this.previousDirection
+      this.prevInputDirection !== 0 &&
+      this.inputDirection !== this.prevInputDirection
     )
   }
 }
