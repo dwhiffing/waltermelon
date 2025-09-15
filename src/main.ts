@@ -9,7 +9,7 @@ const config: Types.Core.GameConfig = {
   width: 160,
   height: 144,
   parent: 'game-container',
-  backgroundColor: '#265935',
+  backgroundColor: '#012824',
   pixelArt: true,
   zoom: 4,
   physics: {

@@ -4,6 +4,8 @@ const SPEED = 250
 const MAX_SPEED = 100
 const JUMP_HEIGHT = 180
 const DRAG = 220
+const WALL_SLIDE_DRAG = 500
+const WALL_SLIDE_SPEED = 25
 const AIR_CONTROL_PERCENT = 0.3
 const ROLL_SPEED = 200
 const SIZE_X = 5
@@ -24,6 +26,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   isExitingCrouch = false
   isStartingCrouch = false
   isPullingUp = false
+  isWallSliding = false
+  wallDirection = 0
   lastVelocity = 0
   hangingLedge: { x: number; y: number; direction: number } | null = null
 
@@ -44,7 +48,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       .setBodySize(SIZE_X, SIZE_Y)
       .setOffset(OFFSET_X, OFFSET_Y)
       .setFlipX(!!flip)
-      .setMaxVelocity(MAX_SPEED, 1000)
 
     this.dust = this.scene.add
       .sprite(0, 0, 'dust')
@@ -78,10 +81,25 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
     if (!this.hangingLedge && !this.onGround && vy > 0) this.handleLedge()
 
+    if (!this.isWallSliding && this.canStartWallSlide()) {
+      this.isWallSliding = true
+      this.wallDirection = this.touchingWallDirection
+      this.play({ key: 'player-wallslide', repeat: -1 }, true).setFlipX(
+        this.wallDirection === -1,
+      )
+    } else if (this.isWallSliding) {
+      if (this.body.velocity.y < WALL_SLIDE_SPEED)
+        this.body.velocity.y = WALL_SLIDE_SPEED
+      if (this.shouldExitWallSlide()) {
+        this.isWallSliding = false
+        this.wallDirection = 0
+      }
+    }
+
     // update states and animations
     this.setDrag(
       this.onGround && !this.isRolling ? (this.isRunning ? DRAG : DRAG * 2) : 0,
-      0,
+      this.isWallSliding ? WALL_SLIDE_DRAG : 0,
     )
 
     if (!this.onSlope && !this.isRolling) this.body.setAccelerationX(0)
@@ -92,6 +110,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       !this.onSlope &&
       !this.isRolling &&
       !this.hangingLedge &&
+      !this.isWallSliding &&
       vy > 0 &&
       this.anims.currentAnim!.key !== 'player-jump3'
     ) {
@@ -194,7 +213,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     let speed = this.isRunning ? SPEED : SPEED * 0.5
     let maxSpeed = this.isRunning ? MAX_SPEED : MAX_SPEED * 0.5
 
-    this.setMaxVelocity(maxSpeed, 1000)
+    if (this.onGround) this.setMaxVelocity(maxSpeed, 1000)
 
     const controlMultiplier = this.isChangingDirection
       ? 0
@@ -204,11 +223,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     let prevDir
     if (this.scene.cursors.left.isDown) {
-      this.setFlipX(true)
+      if (this.onGround) this.setFlipX(true)
       this.body.setAccelerationX(-speed * controlMultiplier)
       prevDir = -1
     } else if (this.scene.cursors.right.isDown) {
-      this.setFlipX(false)
+      if (this.onGround) this.setFlipX(false)
       prevDir = 1
       this.body.setAccelerationX(speed * controlMultiplier)
     } else {
@@ -273,18 +292,25 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   jump = () => {
-    if (
-      !this.onGround ||
-      this.isRolling ||
-      this.isCrouching ||
-      this.isExitingCrouch
-    )
-      return
+    const canNormalJump =
+      this.onGround &&
+      !this.isRolling &&
+      !this.isCrouching &&
+      !this.isExitingCrouch
+    const canWallJump = this.isWallSliding
+
+    if (!canNormalJump && !canWallJump) return
 
     this.scene.time.delayedCall(10, () => this.play('player-jump'))
 
-    // jump off of slope
-    if (this.onSlope) {
+    if (canWallJump) {
+      this.body.setVelocityX(-this.wallDirection * 70)
+      this.body.setVelocityY(-JUMP_HEIGHT / 1.3)
+      this.setFlipX(this.wallDirection === 1)
+      this.isWallSliding = false
+      this.wallDirection = 0
+      this.setMaxVelocity(9999, 9999)
+    } else if (this.onSlope) {
       this.body.setVelocityX(this.slopeDirection * -25)
       this.body.setVelocityY(-(JUMP_HEIGHT / 1.5))
       this.slopeDirection = 0
@@ -374,6 +400,35 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.hangingLedge = null
   }
 
+  // wall sliding
+  get isTouchingWall() {
+    return this.body.blocked.left || this.body.blocked.right
+  }
+
+  get touchingWallDirection() {
+    if (this.body.blocked.left) return -1
+    if (this.body.blocked.right) return 1
+    return 0
+  }
+
+  canStartWallSlide() {
+    return (
+      this.isTouchingWall &&
+      !this.onGround &&
+      !this.hangingLedge &&
+      this.body.velocity.y > 0
+    )
+  }
+
+  shouldExitWallSlide() {
+    return (
+      this.onGround ||
+      !this.isTouchingWall ||
+      this.hangingLedge ||
+      (this.inputDirection !== 0 && this.inputDirection !== this.wallDirection)
+    )
+  }
+
   // misc
 
   getAdjacentTiles() {
@@ -401,11 +456,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const notCrouched = !this.isCrouching && !this.isExitingCrouch
     const notHanging = !this.hangingLedge && !this.isPullingUp
     return (
-      notCrouched &&
-      notHanging &&
-      !this.isRolling &&
-      !this.onSlope &&
-      !this.isLanding
+      (notCrouched &&
+        notHanging &&
+        !this.isRolling &&
+        !this.onSlope &&
+        !this.isLanding) ||
+      this.isWallSliding
     )
   }
 

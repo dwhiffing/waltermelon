@@ -13,6 +13,7 @@ export class GameScene extends Scene {
   layer: Phaser.Tilemaps.TilemapLayer
   coins: Phaser.Physics.Arcade.Group
   debugGraphics: Phaser.GameObjects.Graphics
+  bgGraphics: Phaser.GameObjects.Graphics
 
   constructor() {
     super('Game')
@@ -23,6 +24,7 @@ export class GameScene extends Scene {
     this.anims.globalTimeScale = timeScale
     this.physics.world.timeScale = 1 / timeScale
 
+    this.bgGraphics = this.add.graphics().setDepth(-1)
     this.loadMap()
 
     this.player = new Player(this)
@@ -54,6 +56,10 @@ export class GameScene extends Scene {
     const tileset = this.map.addTilesetImage('tiles')!
     this.layer = this.map.createLayer('Level', tileset)!
     this.map.setCollision([1, 2, 3, 6, 7, 8, 9, 13, 14, 15])
+
+    this.bgGraphics
+      .fillStyle(0x265935, 1)
+      .fillRect(0, 0, this.map.widthInPixels, this.map.heightInPixels)
 
     this.coins = this.physics.add.group()
     this.map.getObjectLayer('Coins')!.objects.forEach(({ x, y }) => {
