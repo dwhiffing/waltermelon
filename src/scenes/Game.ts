@@ -41,7 +41,7 @@ export class GameScene extends Scene {
       () => !this.player.hangingLedge && !this.player.onSlope,
     )
     this.physics.add.overlap(this.player, this.coins, this.collectCoin)
-    this.cameras.main.startFollow(this.player, false, 1, 1, 0, 20)
+    this.cameras.main.startFollow(this.player, false, 1, 1, 0, 0)
   }
 
   update() {

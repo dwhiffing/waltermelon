@@ -6,6 +6,10 @@ const JUMP_HEIGHT = 180
 const DRAG = 220
 const AIR_CONTROL_PERCENT = 0.3
 const ROLL_SPEED = 200
+const SIZE_X = 5
+const SIZE_Y = 20
+const OFFSET_X = 14
+const OFFSET_Y = 31
 export class Player extends Phaser.Physics.Arcade.Sprite {
   dust: Phaser.GameObjects.Sprite
   declare body: Phaser.Physics.Arcade.Body
@@ -26,7 +30,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       y: 0,
     }
 
-    super(scene, spawn.x ?? 0, spawn.y ?? 0, 'player')
+    super(scene, spawn.x ?? 0, (spawn.y ?? 0) - OFFSET_Y, 'player')
     this.scene = scene
 
     const flip = !!getProperty(spawn, 'flip')
@@ -34,8 +38,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.scene.physics.add.existing(this)
     this.scene.add.existing(this)
     this.play('player-jump')
-      .setBodySize(12, 20)
-      .setOffset(10, 12)
+      .setBodySize(SIZE_X, SIZE_Y)
+      .setOffset(OFFSET_X, OFFSET_Y)
       .setFlipX(!!flip)
       .setMaxVelocity(MAX_SPEED, 1000)
 
@@ -53,7 +57,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     this.dust
       .setFlipX(this.flipX)
-      .setPosition(this.x + (this.flipX ? 8 : -8), this.y - 16)
+      .setPosition(this.x + (this.flipX ? 8 : -8), this.y + 4)
       .setVisible(this.isSkidding)
 
     this.setDepth(this.hangingLedge ? -1 : 10)
@@ -61,15 +65,15 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.hangingLedge) {
       this.body.setVelocity(0, 0).setAcceleration(0, 0)
 
-      this.x = this.hangingLedge.x
-      this.y = this.hangingLedge.y
+      this.body.x = this.hangingLedge.x
+      this.body.y = this.hangingLedge.y
       if (!this.isPullingUp) {
         if (this.scene.xKey.isDown) this.startPullUp()
         if (isHoldingDown) this.dropFromHang()
       }
       return
     }
-    // if (!this.hangingLedge && !this.onGround && body.velocity.y > 0) this.detectLedge()
+    if (!this.hangingLedge && !this.onGround && vy > 0) this.handleLedge()
 
     // update states and animations
     this.setDrag(
@@ -195,12 +199,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   handleSlope() {
     let slopeDirection = 0
-    const vx = this.body.velocity.x
-    const vy = this.body.velocity.y
+    const { x: vx, y: vy } = this.body.velocity
     const speed = Math.abs(vx)
     const moveDir = vx > 5 ? 1 : vx < -5 ? -1 : 0
 
-    if (this.body.velocity.y < 0) return
+    if (vy < 0) return
 
     for (const tile of this.getAdjacentTiles()) {
       if (tile?.index !== 4 && tile?.index !== 5) continue
@@ -216,9 +219,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.body.velocity.x *= 0.8
       }
 
-      const t = Math.abs(Math.round(slopeY) - this.y)
+      const t = Math.abs(Math.round(slopeY - (SIZE_Y - 1)) - this.y)
       if (t < 3) {
-        this.y = Math.round(slopeY)
+        this.y = Math.round(slopeY - (SIZE_Y - 1))
         this.body.setVelocityY(0)
       }
 
@@ -306,35 +309,20 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   // ledges
-  detectLedge = (): { x: number; y: number; direction: number } | null => {
-    const body = this.body as Phaser.Physics.Arcade.Body
+  handleLedge = () => {
+    const touchingLeft = this.body.blocked.left
+    const touchingRight = this.body.blocked.right
 
-    const touchingLeft = body.touching.left || body.blocked.left
-    const touchingRight = body.touching.right || body.blocked.right
-
-    if (touchingLeft || touchingRight) {
+    const tile = this.getAdjacentTiles()[0]
+    if ((touchingLeft || touchingRight) && tile) {
+      if (this.scene.layer.getTileAt(tile.x, tile.y - 1)) return
+      const lx = this.body.x + (touchingLeft ? -2 : 2)
+      const ly = this.body.y + 1
       const direction = touchingLeft ? -1 : 1
-
-      this.grabLedge({
-        x: this.x + (touchingLeft ? -9 : 9),
-        y: this.y + 7,
-        direction: direction,
-      })
+      this.hangingLedge = { x: lx, y: ly, direction }
+      this.body.setVelocity(0, 0).setAcceleration(0, 0)
+      this.setFlipX(direction < 0).play('player-hang', true)
     }
-
-    return null
-  }
-
-  grabLedge = (ledge: { x: number; y: number; direction: number }) => {
-    const body = this.body as Phaser.Physics.Arcade.Body
-
-    this.hangingLedge = {
-      x: ledge.x + (ledge.direction > 0 ? 3 : -3),
-      y: ledge.y - 18,
-      direction: ledge.direction,
-    }
-    body.setVelocity(0, 0).setAcceleration(0, 0)
-    this.setFlipX(ledge.direction < 0).play('player-hang', true)
   }
 
   startPullUp = () => {
@@ -342,7 +330,20 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     this.isPullingUp = true
     this.play({ key: 'player-pull-up', frameRate: 7 })
-    this.once('animationcomplete', this.dropFromHang)
+    const x = this.hangingLedge!.direction === 1 ? -8 : 8
+    this.scene.tweens.add({
+      targets: this.scene.cameras.main.followOffset,
+      y: SIZE_Y - 2,
+      x,
+      duration: 820,
+      ease: 'Sin.easeIn',
+    })
+    this.once('animationcomplete', () => {
+      this.y -= SIZE_Y / 2
+      this.x -= x
+      this.scene.cameras.main.setFollowOffset(0, 0)
+      this.dropFromHang()
+    })
   }
 
   dropFromHang = () => {
