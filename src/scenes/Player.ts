@@ -337,6 +337,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const tile = this.getAdjacentTiles()[0]
     if ((touchingLeft || touchingRight) && tile) {
       if (this.scene.layer.getTileAt(tile.x, tile.y - 1)) return
+      const dist = Math.abs(tile.pixelY - this.y)
+      if (dist > 4) return
       const lx = this.body.x + (touchingLeft ? -2 : 2)
       const ly = this.body.y + 1
       const direction = touchingLeft ? -1 : 1
