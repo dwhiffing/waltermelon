@@ -12,6 +12,7 @@ export class BootScene extends Scene {
     this.load.aseprite('dust', 'assets/dust.png', 'assets/dust.json')
     this.load.image('tiles', 'assets/tiles.png')
     this.load.image('coin', 'assets/coin.png')
+    this.load.image('bg', 'assets/bg.png')
     this.load.tilemapTiledJSON('map', 'assets/map.json')
   }
 
