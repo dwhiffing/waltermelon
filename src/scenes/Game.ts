@@ -3,6 +3,14 @@ import { Player } from './Player'
 
 export const tileSize = 16
 const timeScale = 1
+const MELON_PARTICLE: any = {
+  speedY: { min: -50, max: -120 },
+  speedX: { min: -60, max: 60 },
+  angle: { min: 240, max: 290 },
+  gravityY: 240,
+  lifespan: { max: 1200, min: 500 },
+  scale: { start: 2, end: 0 },
+}
 
 export class GameScene extends Scene {
   player: Player
@@ -14,6 +22,7 @@ export class GameScene extends Scene {
   coins: Phaser.Physics.Arcade.Group
   debugGraphics: Phaser.GameObjects.Graphics
   bgGraphics: Phaser.GameObjects.Graphics
+  particles: Phaser.GameObjects.Particles.ParticleEmitter
 
   constructor() {
     super('Game')
@@ -29,6 +38,9 @@ export class GameScene extends Scene {
 
     this.player = new Player(this)
     this.debugGraphics = this.add.graphics()
+    this.particles = this.add
+      .particles(0, 0, 'bits', MELON_PARTICLE)
+      .setDepth(40)
 
     this.cursors = this.input.keyboard!.createCursorKeys()
     this.zKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.Z)
@@ -75,6 +87,7 @@ export class GameScene extends Scene {
   collectCoin = (_player: any, coin: any) => {
     this.coins.remove(coin)
     coin.destroy()
+    this.particles.explode(8, this.player.x - 4, this.player.y + 9)
   }
 
   drawTilePhysicsBodies() {
