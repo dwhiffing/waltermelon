@@ -112,9 +112,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       !this.hangingLedge &&
       !this.isWallSliding &&
       vy > 0 &&
-      this.anims.currentAnim!.key !== 'player-jump3'
+      this.anims.currentAnim!.key !== 'player-fall'
     ) {
-      this.play({ key: 'player-jump3' }, true)
+      this.play({ key: 'player-fall' }, true)
     }
 
     if (this.onGround) {
@@ -135,7 +135,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       const shouldStopSkid =
         this.isSkidding && (this.inputDirection === moveDir || speed < 5)
 
-      if (this.anims.currentAnim!.key === 'player-jump3') {
+      if (this.anims.currentAnim!.key === 'player-fall') {
         const isFast = this.lastVelocity > 200
         this.play(
           { key: isFast ? 'player-uncrouch' : 'player-land', frameRate: 6 },

@@ -482,9 +482,8 @@
   "frameTags": [
    { "name": "player-walk", "from": 0, "to": 5, "direction": "forward", "color": "#000000ff" },
    { "name": "player-idle", "from": 6, "to": 9, "direction": "forward", "color": "#000000ff" },
-   { "name": "player-jump2", "from": 10, "to": 15, "direction": "forward", "color": "#000000ff" },
    { "name": "player-jump", "from": 13, "to": 13, "direction": "forward", "color": "#000000ff" },
-   { "name": "player-jump3", "from": 14, "to": 15, "direction": "forward", "repeat": "1", "color": "#000000ff" },
+   { "name": "player-fall", "from": 14, "to": 15, "direction": "forward", "repeat": "1", "color": "#000000ff" },
    { "name": "player-land", "from": 16, "to": 18, "direction": "forward", "color": "#000000ff" },
    { "name": "player-run", "from": 19, "to": 24, "direction": "forward", "color": "#000000ff" },
    { "name": "player-wallslide", "from": 25, "to": 28, "direction": "forward", "color": "#000000ff" },
