@@ -80,6 +80,7 @@ export class GameScene extends Scene {
 
   handleCameraPan() {
     const x = this.player.flipX ? 50 : -50
+    if (!this.player.onGround) return
     if (this.cursors.up.isDown) {
       const duration = this.time.now - this.cursors.up.timeDown
       if (duration >= 500) {
