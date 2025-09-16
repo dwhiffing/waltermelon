@@ -101,7 +101,8 @@ export class GameScene extends Scene {
   stopCameraPan() {
     if (!this.isPanned) return
 
-    this.player.playReverse('player-look', true)
+    if (this.player.anims.currentAnim?.key === 'player-look')
+      this.player.playReverse('player-look', true)
     this.isPanned = false
     const ease = 'Sine.easeInOut'
     const targets = this.cameras.main.followOffset

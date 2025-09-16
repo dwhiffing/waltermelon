@@ -51,19 +51,15 @@ export class DynamicTextureManager {
         frames.push({ key: `${key}-dynamic`, frame: i.toString() })
       }
 
+      if (tag.direction === 'reverse') frames.reverse()
+
       if (this.scene.anims.exists(animKey)) this.scene.anims.remove(animKey)
       this.scene.anims.create({
         key: animKey,
         frames: frames,
         frameRate: 8,
-        repeat:
-          tag.direction === 'pingpong'
-            ? -1
-            : animKey.includes('idle') ||
-              animKey.includes('walk') ||
-              animKey.includes('run')
-            ? -1
-            : 0,
+        repeat: +tag.repeat,
+        yoyo: tag.direction === 'pingpong',
       })
     })
   }

@@ -557,6 +557,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     return (
       !this.isHoldingDown &&
       !this.isStartingCrouch &&
+      !this.isExitingCrouch &&
       this.isCrouching &&
       this.xSpeed < 5
     )
