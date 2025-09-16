@@ -110,7 +110,10 @@ export class GameScene extends Scene {
     this.map = this.make.tilemap({ key: 'map', tileWidth: 32, tileHeight: 32 })
     const tileset = this.map.addTilesetImage('tiles')!
     this.layer = this.map.createLayer('Level', tileset)!
-    this.map.setCollision([1, 2, 3, 6, 7, 8, 9, 13, 14, 15, 16, 17, 22, 23])
+    this.map.setCollision([
+      1, 2, 3, 9, 10, 11, 16, 17, 18, 19, 20, 21, 28, 29, 31, 32, 33, 45, 23,
+      31, 39,
+    ])
 
     this.coins = this.physics.add.group()
     this.map.getObjectLayer('Coins')!.objects.forEach(({ x, y }) => {
