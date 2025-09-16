@@ -413,6 +413,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.body.velocity.y < WALL_SLIDE_SPEED)
       this.body.velocity.y = WALL_SLIDE_SPEED
     if (this.shouldExitWallSlide) {
+      this.play({ key: 'player-fall' }, true)
       this.isWallSliding = false
       this.wallDirection = 0
     }
