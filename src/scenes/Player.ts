@@ -13,6 +13,9 @@ const SIZE_Y = 20
 const OFFSET_X = 14
 const OFFSET_Y = 31
 const RUN_HOLD_TIME = 1000
+const CURSE_START_TIME = 13
+const CURSE_CYCLE_END = 20
+
 export class Player extends Phaser.Physics.Arcade.Sprite {
   dust: Phaser.GameObjects.Sprite
   declare body: Phaser.Physics.Arcade.Body
@@ -34,6 +37,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   hangingLedge: { x: number; y: number; direction: number } | null = null
   tripDirection = 0
   tripCheck = false
+  curseTimer = 0
+  isBlinking = false
 
   constructor(scene: GameScene) {
     const spawn = scene.map.findObject('Spawn', (o) => o.name === 'spawn') ?? {
@@ -55,6 +60,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.dust = this.scene.add
       .sprite(0, 0, 'dust')
       .play({ key: 'dust-walk', repeat: -1 }, true)
+
+    this.scene.time.addEvent({
+      delay: 100,
+      loop: true,
+      callback: this.updateCurseTimer,
+    })
   }
 
   update() {
@@ -407,7 +418,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
-  // misc
   getAdjacentTiles() {
     const body = this.body
     const centerTileX = Math.floor((body.x + body.width / 2) / tileSize)
@@ -422,6 +432,55 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       }
     }
     return tiles
+  }
+
+  updateCurseTimer = () => {
+    this.curseTimer = (this.curseTimer + 1) % (CURSE_CYCLE_END * 10)
+
+    const secs = this.curseTimer / 10
+    const shouldBlink =
+      (secs >= CURSE_START_TIME - 1 && secs < CURSE_START_TIME) ||
+      (secs >= CURSE_CYCLE_END - 1 && secs < CURSE_CYCLE_END)
+
+    if (shouldBlink) this.startBlinking()
+    if (!shouldBlink) this.stopBlinking()
+    if (!this.isBlinking) this.updateColorState()
+  }
+
+  startBlinking = () => {
+    if (this.isBlinking) return
+
+    this.isBlinking = true
+    let blinkState = true
+    this.scene.time.addEvent({
+      delay: 100,
+      repeat: 10,
+      callback: () => {
+        blinkState = !blinkState
+        this.updateColorState(blinkState)
+      },
+    })
+  }
+
+  stopBlinking = () => {
+    this.isBlinking = false
+    this.updateColorState()
+  }
+
+  updateColorState(isCursed = this.isCursed) {
+    if (isCursed) {
+      this.scene.dynamicTextureManager.swapColor(
+        { r: 252, g: 222, b: 234 },
+        { r: 255, g: 77, b: 109 },
+      )
+    } else {
+      this.scene.dynamicTextureManager.reset()
+    }
+  }
+
+  get isCursed() {
+    const secs = this.curseTimer / 10
+    return secs >= CURSE_START_TIME && secs < CURSE_CYCLE_END
   }
 
   get canStartWallSlide() {
@@ -508,7 +567,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   get shouldLand() {
-    return this.anims.currentAnim!.key === 'player-fall'
+    return this.anims.currentAnim?.key === 'player-fall'
   }
 
   get shouldPlayFallAnim() {
@@ -518,7 +577,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       !this.hangingLedge &&
       !this.isWallSliding &&
       this.body.velocity.y > 5 &&
-      this.anims.currentAnim!.key !== 'player-fall'
+      this.anims.currentAnim?.key !== 'player-fall'
     )
   }
 
