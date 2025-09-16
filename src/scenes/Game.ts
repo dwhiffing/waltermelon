@@ -23,6 +23,8 @@ export class GameScene extends Scene {
   debugGraphics: Phaser.GameObjects.Graphics
   bgGraphics: Phaser.GameObjects.TileSprite
   particles: Phaser.GameObjects.Particles.ParticleEmitter
+  panTween: Phaser.Tweens.Tween | null = null
+  isPanned: boolean
 
   constructor() {
     super('Game')
@@ -62,7 +64,46 @@ export class GameScene extends Scene {
 
   update() {
     this.player.update()
+    this.handleCameraPan()
     if (this.physics.config.debug) this.drawTilePhysicsBodies()
+  }
+
+  handleCameraPan() {
+    const x = this.player.flipX ? 50 : -50
+    if (this.cursors.up.isDown) {
+      const duration = this.time.now - this.cursors.up.timeDown
+      if (duration >= 500) {
+        if (!this.isPanned) this.player.play('player-look', true)
+        this.startCameraPan(x, 50)
+      }
+    } else if (this.cursors.down.isDown) {
+      const duration = this.time.now - this.cursors.down.timeDown
+      if (duration >= 500) this.startCameraPan(x, -70)
+    } else {
+      this.stopCameraPan()
+    }
+  }
+
+  startCameraPan(x = 0, y = 50) {
+    if (this.isPanned) return
+
+    this.isPanned = true
+    const ease = 'Sine.easeInOut'
+    const targets = this.cameras.main.followOffset
+    const duration = 600
+    this.panTween = this.tweens.add({ targets, x, y, duration, ease })
+  }
+
+  stopCameraPan() {
+    if (!this.isPanned) return
+
+    this.player.playReverse('player-look', true)
+    this.isPanned = false
+    const ease = 'Sine.easeInOut'
+    const targets = this.cameras.main.followOffset
+    const duration = 600
+    this.panTween?.stop()
+    this.panTween = this.tweens.add({ targets, x: 0, y: 0, duration, ease })
   }
 
   loadMap() {

@@ -529,6 +529,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       !this.isExitingCrouch &&
       !this.isRolling &&
       !this.isLanding &&
+      this.anims.currentAnim?.key !== 'player-look' &&
       !this.onSlope
     )
   }
