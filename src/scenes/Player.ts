@@ -270,17 +270,17 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   startLand = () => {
-    const isFast = this.lastVelocity > 200
-    if (isFast) {
-      this.walkHoldStartTime = this.scene.time.now
-      this.isRunning = false
-    }
-    this.play(
-      { key: isFast ? 'player-uncrouch' : 'player-land', frameRate: 6 },
-      true,
-    )
-    this.once('animationcomplete', () => (this.isLanding = false))
     this.isLanding = true
+    this.isRunning = false
+    const isFast = this.lastVelocity > 200
+    this.walkHoldStartTime = this.scene.time.now
+    const key = isFast ? 'player-uncrouch' : 'player-land'
+    this.play({ key, frameRate: 5 }, true).once(
+      'animationcomplete',
+      () => (this.isLanding = false),
+    )
+    this.body.velocity.x *= isFast ? 0 : 0.3
+    this.body.setAccelerationX(0)
   }
 
   startCrouch = () => {
@@ -517,7 +517,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       !this.isRolling &&
       !this.hangingLedge &&
       !this.isWallSliding &&
-      this.body.velocity.y > 0 &&
+      this.body.velocity.y > 5 &&
       this.anims.currentAnim!.key !== 'player-fall'
     )
   }
@@ -534,7 +534,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   get maxSpeed() {
-    return this.isRunning ? MAX_SPEED : MAX_SPEED * 0.5
+    return this.isRunning ? MAX_SPEED : MAX_SPEED * 0.65
   }
 
   get targetDragX() {
