@@ -56,11 +56,17 @@ export class GameScene extends Scene {
     this.xKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.X)
     this.zKey.on('down', this.player.jump, this)
 
+    let lastv = 0
     this.physics.add.collider(
       this.player,
       this.layer,
-      () => {},
-      () => !this.player.hangingLedge && !this.player.onSlope,
+      () => {
+        if (this.player.body.blocked.up) this.player.body.velocity.y = lastv
+      },
+      () => {
+        lastv = this.player.body.velocity.y
+        return !this.player.hangingLedge && !this.player.onSlope
+      },
     )
     this.physics.add.overlap(this.player, this.coins, this.collectCoin)
     this.cameras.main.startFollow(this.player, false, 1, 1, 0, 0)
