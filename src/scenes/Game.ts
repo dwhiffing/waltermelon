@@ -80,7 +80,7 @@ export class GameScene extends Scene {
 
   handleCameraPan() {
     const x = this.player.flipX ? 50 : -50
-    if (!this.player.onGround) return
+    if (!this.player.onGround || this.player.body.velocity.x !== 0) return
     if (this.cursors.up.isDown) {
       const duration = this.time.now - this.cursors.up.timeDown
       if (duration >= 500) {
@@ -109,7 +109,9 @@ export class GameScene extends Scene {
     if (!this.isPanned) return
 
     if (this.player.anims.currentAnim?.key === 'player-look')
-      this.player.playReverse('player-look', true)
+      this.player
+        .playReverse('player-look', true)
+        .once('animationcomplete', () => this.player.play('player-idle', true))
     this.isPanned = false
     const ease = 'Sine.easeInOut'
     const targets = this.cameras.main.followOffset
