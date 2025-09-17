@@ -227,7 +227,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
-  jump = () => {
+  jump = async () => {
     const canNormalJump =
       this.onGround &&
       !this.isRolling &&
@@ -237,19 +237,30 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     if (!canNormalJump && !canWallJump) return
 
-    this.scene.time.delayedCall(10, () => this.play('player-jump'))
-
     if (canWallJump) {
       this.body.setVelocity(-this.wallDirection * 70, -JUMP_HEIGHT / 1.3)
       this.setFlipX(this.wallDirection === 1)
       this.isWallSliding = false
       this.wallDirection = 0
-    } else if (this.onSlope) {
+      this.play('player-jump')
+      return
+    }
+    if (this.onSlope) {
       this.body.setVelocity(this.slopeDirection * -25, -(JUMP_HEIGHT / 1.5))
       this.slopeDirection = 0
-    } else {
-      this.body.setVelocityY(-JUMP_HEIGHT)
+      this.play('player-jump')
+      return
     }
+
+    this.play({ key: 'player-jump-start', frameRate: 12 }).once(
+      'animationcomplete',
+      async () => {
+        if (!this.onGround) return
+        await this.scene.asyncCall(20)
+        this.play('player-jump')
+        this.body.setVelocityY(-JUMP_HEIGHT)
+      },
+    )
   }
 
   // crouch/roll
@@ -593,6 +604,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       !this.isExitingCrouch &&
       !this.isRolling &&
       !this.isLanding &&
+      this.anims.currentAnim?.key !== 'player-jump-start' &&
       this.anims.currentAnim?.key !== 'player-look' &&
       !this.onSlope
     )
