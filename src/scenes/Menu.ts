@@ -2,6 +2,7 @@ import { Scene } from 'phaser'
 
 export class MenuScene extends Scene {
   score: number
+  bgGraphics: Phaser.GameObjects.TileSprite
   constructor() {
     super('Menu')
   }
@@ -11,25 +12,53 @@ export class MenuScene extends Scene {
   }
 
   create() {
-    this.cameras.main.setBackgroundColor(0x87cf90)
+    const title = this.add.image(81, -55, 'title').setOrigin(0.5)
 
-    let state = 0
-    this.time.addEvent({
-      repeat: -1,
-      delay: 700,
-      callback: () => {
-        state = state ? 0 : 1
-        text.setTintFill(state ? 0x000000 : 0x5d5fbf)
+    this.bgGraphics = this.add
+      .tileSprite(0, 0, 160, 144, 'bg')
+      .setOrigin(0)
+      .setDepth(-1)
+
+    const text = this.add
+      .bitmapText(80, 120, 'wayfarer', 'PRESS Z TO START')
+      .setTintFill(0xfcdeea)
+      .setOrigin(0.5)
+      .setAlpha(0)
+
+    this.tweens.add({
+      targets: title,
+      y: 55,
+      duration: 800,
+      delay: 500,
+      ease: 'Bounce.easeOut',
+      onComplete: () => {
+        this.tweens.add({
+          targets: title,
+          y: 50,
+          duration: 1000,
+          ease: 'Sine.easeInOut',
+          yoyo: true,
+          repeat: -1,
+        })
+        let state = 0
+        text.setAlpha(1)
+        this.time.addEvent({
+          repeat: -1,
+          delay: 850,
+          callback: () => {
+            state = state ? 0 : 1
+            text.setTintFill(state ? 0x265935 : 0xfcdeea)
+          },
+        })
       },
     })
 
-    const text = this.add
-      .bitmapText(80, this.cameras.main.height / 2, 'wayfarer', 'PRESS ENTER')
-      .setTintFill(0x000000)
-      .setOrigin(0.5)
-
-    this.input.keyboard?.once('keydown-ENTER', () => {
+    this.input.keyboard?.once('keydown-Z', () => {
       this.scene.start('Game')
     })
+  }
+
+  update() {
+    this.bgGraphics.tilePositionX += 0.15
   }
 }
