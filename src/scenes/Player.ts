@@ -3,6 +3,8 @@ import { GameScene, tileSize } from './Game'
 const SPEED = 150
 const MAX_SPEED = 100
 const JUMP_HEIGHT = 180
+const MIN_JUMP_HEIGHT = 90
+const MAX_JUMP_HOLD_TIME = 200
 const DRAG = 220
 const WALL_SLIDE_DRAG = 500
 const WALL_SLIDE_SPEED = 25
@@ -39,6 +41,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   tripCheck = false
   curseTimer = 0
   isBlinking = false
+  isJumping = false
+  isChargingJump = false
+  jumpStartTime = 0
+  jumpKeyHeld = false
 
   constructor(scene: GameScene) {
     const spawn = scene.gameMap.tilemap.findObject(
@@ -109,6 +115,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     this.handleInput()
+    this.handleVariableJump()
     this.detectSlope()
     this.lastVelocity = this.body.velocity.y
   }
@@ -146,6 +153,19 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.body.setAccelerationX(0)
 
     this.scene.time.delayedCall(100, () => (this.prevInputDirection = dir))
+  }
+
+  handleVariableJump = () => {
+    // Auto-jump when max charge time is reached
+    if (this.isChargingJump && this.jumpKeyHeld) {
+      const chargeDuration = this.scene.time.now - this.jumpStartTime
+      if (chargeDuration >= MAX_JUMP_HOLD_TIME) {
+        // Max charge reached, execute jump with full height
+        this.executeJump(-JUMP_HEIGHT)
+      }
+    }
+
+    if (this.isJumping && this.body.velocity.y >= 0) this.isJumping = false
   }
 
   detectSlope() {
@@ -227,7 +247,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
-  jump = async () => {
+  startJump = async () => {
     const canNormalJump =
       this.onGround &&
       !this.isRolling &&
@@ -237,31 +257,50 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     if (!canNormalJump && !canWallJump) return
 
+    this.jumpKeyHeld = true
+    this.isChargingJump = true
+    this.jumpStartTime = this.scene.time.now
+
+    if (canNormalJump) {
+      this.play({ key: 'player-jump-start', frameRate: 12 })
+    }
+
     if (canWallJump) {
-      this.body.setVelocity(-this.wallDirection * 70, -JUMP_HEIGHT / 1.3)
+      this.executeJump(-JUMP_HEIGHT / 1.3, -this.wallDirection * 70)
       this.setFlipX(this.wallDirection === 1)
       this.isWallSliding = false
       this.wallDirection = 0
-      this.play('player-jump')
       return
     }
     if (this.onSlope) {
-      this.body.setVelocity(this.slopeDirection * -25, -(JUMP_HEIGHT / 1.5))
+      this.executeJump(-(JUMP_HEIGHT / 1.5), this.slopeDirection * -25)
       this.slopeDirection = 0
-      this.play('player-jump')
       return
     }
-
-    this.play({ key: 'player-jump-start', frameRate: 12 }).once(
-      'animationcomplete',
-      async () => {
-        if (!this.onGround) return
-        await this.scene.asyncCall(20)
-        this.play('player-jump')
-        this.body.setVelocityY(-JUMP_HEIGHT)
-      },
-    )
   }
+
+  executeJump = (velocityY: number, velocityX?: number) => {
+    this.play('player-jump')
+    if (velocityX) this.body.setVelocityX(velocityX)
+    this.body.setVelocityY(velocityY)
+    this.isJumping = true
+    this.isChargingJump = false
+  }
+
+  endJump = () => {
+    this.jumpKeyHeld = false
+
+    if (this.isChargingJump) {
+      const chargeDuration = this.scene.time.now - this.jumpStartTime
+      const chargeProgress = Math.min(chargeDuration / MAX_JUMP_HOLD_TIME, 1)
+      const jumpHeight =
+        MIN_JUMP_HEIGHT + (JUMP_HEIGHT - MIN_JUMP_HEIGHT) * chargeProgress
+
+      this.executeJump(-jumpHeight)
+    }
+  }
+
+  jump = () => this.startJump()
 
   // crouch/roll
   startRoll = () => {
