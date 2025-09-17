@@ -1,4 +1,5 @@
 import { GameScene, tileSize } from './Game'
+import { MovingTile } from './MovingTile'
 
 const TILE_CRACK_DELAY = 100 // Start crack animation 1.5s after stepping
 const TILE_REMOVE_DELAY = 2200 // Remove tile 2s after stepping
@@ -15,6 +16,7 @@ export class GameMap {
   map: Phaser.Tilemaps.Tilemap
   coins: Phaser.Physics.Arcade.Group
   layer: Phaser.Tilemaps.TilemapLayer
+  movingTiles: MovingTile[] = []
   steppedOnTiles: Set<string> = new Set()
   tilesToRemove: Map<string, { removeTime: number; crackStartTime: number }> =
     new Map()
@@ -51,11 +53,28 @@ export class GameMap {
     const tileset = this.map.addTilesetImage('tiles')!
     this.layer = this.map.createLayer('Level', tileset)!
     this.map.setCollision(COLLISION_TILES)
+
+    const platformsLayer = this.map.getObjectLayer('Platforms')
+    if (!platformsLayer) return
+
+    platformsLayer.objects.forEach((obj: any) => {
+      if (!obj.gid) return
+      const get = (k: string) =>
+        obj.properties?.find((p: any) => p.name === k)?.value ?? 0
+
+      const movingTile = new MovingTile(this.scene, {
+        ...obj,
+        targetX: get('targetX'),
+        targetY: get('targetY'),
+      })
+      this.movingTiles.push(movingTile)
+    })
   }
 
   update() {
     this.processTileRemovals()
     this.processTileRestorations()
+    this.movingTiles.forEach((tile) => tile.update())
     if (this.scene.physics.config.debug) this.drawTilePhysicsBodies()
     if (this.scene.player.onGround)
       this.checkPlayerSteppedOnTile(this.scene.player.body)
@@ -220,6 +239,10 @@ export class GameMap {
 
   get tileLayer() {
     return this.layer
+  }
+
+  get movingTileSprites() {
+    return this.movingTiles.map((tile) => tile.getSprite())
   }
 
   get widthInPixels() {

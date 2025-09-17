@@ -13,7 +13,10 @@ export class BootScene extends Scene {
     this.load.image('bits', 'assets/bits.png')
     this.load.image('title', 'assets/title.png')
     this.load.aseprite('dust', 'assets/dust.png', 'assets/dust.json')
-    this.load.image('tiles', 'assets/tiles.png')
+    this.load.spritesheet('tiles', 'assets/tiles.png', {
+      frameWidth: 16,
+      frameHeight: 16,
+    })
     this.load.image('coin', 'assets/coin.png')
     this.load.image('bg', 'assets/bg.png')
     this.load.tilemapTiledJSON('map', 'assets/map.json')

@@ -62,6 +62,10 @@ export class GameScene extends Scene {
       },
     )
     this.physics.add.overlap(this.player, this.gameMap.coins, this.collectCoin)
+    this.gameMap.movingTileSprites.forEach((tile) => {
+      this.physics.add.collider(this.player, tile)
+    })
+
     this.cameras.main.startFollow(this.player, false, 1, 1, 0, 0)
   }
 
