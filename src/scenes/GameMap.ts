@@ -39,7 +39,13 @@ export class GameMap {
     this.debugGraphics = this.scene.add.graphics()
 
     this.bgGraphics = this.scene.add
-      .tileSprite(0, 0, this.map.widthInPixels, this.map.heightInPixels, 'bg')
+      .tileSprite(
+        16,
+        16,
+        this.map.widthInPixels - 32,
+        this.map.heightInPixels - 32,
+        'bg',
+      )
       .setOrigin(0)
       .setDepth(-1)
   }
