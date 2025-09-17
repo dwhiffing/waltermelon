@@ -54,7 +54,7 @@ export class MenuScene extends Scene {
     })
 
     this.input.keyboard?.once('keydown-Z', () => {
-      this.scene.start('Game')
+      this.scene.launch('Transition', { from: 'Menu', to: 'Game' })
     })
   }
 
