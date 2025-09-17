@@ -2,9 +2,8 @@ import { GameScene, tileSize } from './Game'
 
 const SPEED = 150
 const MAX_SPEED = 100
-const JUMP_HEIGHT = 180
-const MIN_JUMP_HEIGHT = 90
-const MAX_JUMP_HOLD_TIME = 200
+const JUMP_HEIGHT = 80
+const MAX_JUMP_HOLD_TIME = 120
 const DRAG = 220
 const WALL_SLIDE_DRAG = 500
 const WALL_SLIDE_SPEED = 25
@@ -115,7 +114,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     this.handleInput()
-    this.handleVariableJump()
+    this.handleJump()
     this.detectSlope()
     this.lastVelocity = this.body.velocity.y
   }
@@ -153,19 +152,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.body.setAccelerationX(0)
 
     this.scene.time.delayedCall(100, () => (this.prevInputDirection = dir))
-  }
-
-  handleVariableJump = () => {
-    // Auto-jump when max charge time is reached
-    if (this.isChargingJump && this.jumpKeyHeld) {
-      const chargeDuration = this.scene.time.now - this.jumpStartTime
-      if (chargeDuration >= MAX_JUMP_HOLD_TIME) {
-        // Max charge reached, execute jump with full height
-        this.executeJump(-JUMP_HEIGHT)
-      }
-    }
-
-    if (this.isJumping && this.body.velocity.y >= 0) this.isJumping = false
   }
 
   detectSlope() {
@@ -247,6 +233,21 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
+  handleJump = () => {
+    if (this.isJumping && this.jumpKeyHeld && this.body.velocity.y < 0) {
+      const chargeDuration = this.scene.time.now - this.jumpStartTime
+      if (chargeDuration <= MAX_JUMP_HOLD_TIME) {
+        const extraVelocity = 4
+        this.body.setVelocityY(this.body.velocity.y - extraVelocity)
+      }
+    }
+
+    if (this.isJumping && this.body.velocity.y >= 0) {
+      this.isJumping = false
+      this.jumpKeyHeld = false
+    }
+  }
+
   startJump = async () => {
     const canNormalJump =
       this.onGround &&
@@ -258,28 +259,29 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (!canNormalJump && !canWallJump) return
 
     this.jumpKeyHeld = true
-    this.isChargingJump = true
     this.jumpStartTime = this.scene.time.now
 
-    if (canNormalJump) {
-      this.play({ key: 'player-jump-start', frameRate: 12 })
-    }
-
     if (canWallJump) {
-      this.executeJump(-JUMP_HEIGHT / 1.3, -this.wallDirection * 70)
+      this.doJump(-JUMP_HEIGHT / 1.4, -this.wallDirection * 60)
       this.setFlipX(this.wallDirection === 1)
       this.isWallSliding = false
       this.wallDirection = 0
       return
     }
     if (this.onSlope) {
-      this.executeJump(-(JUMP_HEIGHT / 1.5), this.slopeDirection * -25)
+      this.doJump(-(JUMP_HEIGHT / 1.5), this.slopeDirection * -25)
       this.slopeDirection = 0
       return
     }
+
+    const { left, right } = this.scene.cursors
+    let x =
+      left.isDown && this.flipX ? -35 : right.isDown && !this.flipX ? 35 : 0
+    if (Math.abs(x) < Math.abs(this.body.velocity.x)) x = this.body.velocity.x
+    this.doJump(-JUMP_HEIGHT, x)
   }
 
-  executeJump = (velocityY: number, velocityX?: number) => {
+  doJump = (velocityY: number, velocityX?: number) => {
     this.play('player-jump')
     if (velocityX) this.body.setVelocityX(velocityX)
     this.body.setVelocityY(velocityY)
@@ -289,18 +291,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   endJump = () => {
     this.jumpKeyHeld = false
-
-    if (this.isChargingJump) {
-      const chargeDuration = this.scene.time.now - this.jumpStartTime
-      const chargeProgress = Math.min(chargeDuration / MAX_JUMP_HOLD_TIME, 1)
-      const jumpHeight =
-        MIN_JUMP_HEIGHT + (JUMP_HEIGHT - MIN_JUMP_HEIGHT) * chargeProgress
-
-      this.executeJump(-jumpHeight)
-    }
   }
-
-  jump = () => this.startJump()
 
   // crouch/roll
   startRoll = () => {
@@ -334,10 +325,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   startLand = () => {
-    this.isLanding = true
     this.isRunning = false
-    const isFast = this.lastVelocity > 200
     this.walkHoldStartTime = this.scene.time.now
+
+    if (this.lastVelocity < 85) return (this.body.velocity.x *= 0.5)
+
+    this.isLanding = true
+    const isFast = this.lastVelocity > 200
     const key = isFast ? 'player-uncrouch' : 'player-land'
     this.play({ key, frameRate: 5 }, true).once(
       'animationcomplete',
