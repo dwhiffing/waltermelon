@@ -41,7 +41,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   isBlinking = false
 
   constructor(scene: GameScene) {
-    const spawn = scene.map.findObject('Spawn', (o) => o.name === 'spawn') ?? {
+    const spawn = scene.gameMap.tilemap.findObject(
+      'Spawn',
+      (o: any) => o.name === 'spawn',
+    ) ?? {
       x: 0,
       y: 0,
     }
@@ -336,7 +339,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const tile = this.getAdjacentTiles()[0]
     if (!tile) return
     // return if there is a tile directly above this tile
-    if (this.scene.layer.getTileAt(tile.x, tile.y - 1)) return
+    if (this.scene.gameMap.layer.getTileAt(tile.x, tile.y - 1)) return
 
     const distX = Math.abs(tile.pixelX - this.x) - (this.flipX ? 19 : 0)
     const distY = Math.abs(tile.pixelY - this.y)
@@ -428,7 +431,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     for (let x = centerTileX - 1; x <= centerTileX + 1; x++) {
       for (let y = bottomTileY; y <= bottomTileY + 1; y++) {
-        const tile = this.scene.layer.getTileAt(x, y)
+        const tile = this.scene.gameMap.layer.getTileAt(x, y)
         if (tile) tiles.push(tile)
       }
     }
