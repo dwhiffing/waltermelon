@@ -16,6 +16,7 @@ export class GameMap {
   map: Phaser.Tilemaps.Tilemap
   coins: Phaser.Physics.Arcade.Group
   layer: Phaser.Tilemaps.TilemapLayer
+  overlay: Phaser.Tilemaps.TilemapLayer
   movingTiles: MovingTile[] = []
   steppedOnTiles: Set<string> = new Set()
   tilesToRemove: Map<string, { removeTime: number; crackStartTime: number }> =
@@ -32,6 +33,8 @@ export class GameMap {
   crackSprites: Map<string, Phaser.GameObjects.Sprite> = new Map()
   bgGraphics: Phaser.GameObjects.TileSprite
   debugGraphics: Phaser.GameObjects.Graphics
+  overlayAlphaTween: Phaser.Tweens.Tween | null = null
+  isOverlappingOverlay = false
 
   constructor(scene: GameScene) {
     this.scene = scene
@@ -59,6 +62,10 @@ export class GameMap {
     const tileset = this.map.addTilesetImage('tiles')!
     this.layer = this.map.createLayer('Level', tileset)!
     this.map.setCollision(COLLISION_TILES)
+    this.overlay = this.map
+      .createLayer('Overlay', tileset)!
+      .setDepth(1000)
+      .setAlpha(1)
 
     const platformsLayer = this.map.getObjectLayer('Platforms')
     if (!platformsLayer) return
@@ -84,6 +91,12 @@ export class GameMap {
     if (this.scene.physics.config.debug) this.drawTilePhysicsBodies()
     if (this.scene.player.onGround)
       this.checkPlayerSteppedOnTile(this.scene.player.body)
+
+    const currentlyOverlapping = this.checkOverlayTileOverlap()
+    if (currentlyOverlapping !== this.isOverlappingOverlay) {
+      this.isOverlappingOverlay = currentlyOverlapping
+      this.tweenOverlayAlpha(currentlyOverlapping ? 0.5 : 1.0)
+    }
   }
 
   loadCoins() {
@@ -213,6 +226,33 @@ export class GameMap {
         this.tilesToRestore.delete(tileKey)
       }
     }
+  }
+
+  checkOverlayTileOverlap(): boolean {
+    const body = this.scene.player.body
+    const leftTileX = Math.floor(body.x / tileSize)
+    const rightTileX = Math.floor((body.x + body.width) / tileSize)
+    const topTileY = Math.floor(body.y / tileSize)
+    const bottomTileY = Math.floor((body.y + body.height) / tileSize)
+
+    for (let x = leftTileX; x <= rightTileX; x++) {
+      for (let y = topTileY; y <= bottomTileY; y++) {
+        const tile = this.scene.gameMap.overlay.getTileAt(x, y)
+        if (tile && tile.index > 0) return true
+      }
+    }
+    return false
+  }
+
+  tweenOverlayAlpha(targetAlpha: number) {
+    this.overlayAlphaTween?.stop()
+    this.overlayAlphaTween = this.scene.tweens.add({
+      targets: this.scene.gameMap.overlay,
+      alpha: targetAlpha,
+      duration: 200,
+      ease: 'Sine.easeInOut',
+      onComplete: () => (this.overlayAlphaTween = null),
+    })
   }
 
   drawTilePhysicsBodies() {
