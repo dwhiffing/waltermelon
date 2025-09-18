@@ -262,7 +262,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.jumpStartTime = this.scene.time.now
 
     if (canWallJump) {
-      this.doJump(-JUMP_HEIGHT / 1.4, -this.wallDirection * 60)
+      this.doJump(-JUMP_HEIGHT, -this.wallDirection * 60)
       this.setFlipX(this.wallDirection === 1)
       this.isWallSliding = false
       this.wallDirection = 0
