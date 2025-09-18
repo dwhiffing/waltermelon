@@ -345,6 +345,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.isCrouching = true
     this.isStartingCrouch = true
     this.play({ key: 'player-crouch', frameRate: 8 }, true)
+    this.setVelocityX(0).setAccelerationX(0)
     this.once('animationcomplete', () => (this.isStartingCrouch = false))
   }
 
