@@ -69,11 +69,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       .sprite(0, 0, 'dust')
       .play({ key: 'dust-walk', repeat: -1 }, true)
 
-    this.scene.time.addEvent({
-      delay: 100,
-      loop: true,
-      callback: this.updateCurseTimer,
-    })
+    // this.scene.time.addEvent({
+    //   delay: 100,
+    //   loop: true,
+    //   callback: this.updateCurseTimer,
+    // })
   }
 
   update() {
