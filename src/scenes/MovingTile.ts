@@ -54,8 +54,8 @@ export class MovingTile {
       targets: this.sprite,
       x: currentTarget.x,
       y: currentTarget.y,
-      duration: manhattanDistance * 15,
-      ease: 'Sine.easeInOut',
+      duration: manhattanDistance * 20,
+      ease: 'Quad.easeInOut',
       onUpdate: (_tween, target) => {
         const p = this.scene.player
         const deltaX = target.body.x - prevX
