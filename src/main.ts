@@ -1,6 +1,7 @@
 import { BootScene } from './scenes/Boot'
 import { GameScene } from './scenes/Game'
 import { MenuScene } from './scenes/Menu'
+import { IntroScene } from './scenes/Intro'
 import { TransitionScene } from './scenes/Transition'
 
 import { Game, Types } from 'phaser'
@@ -25,7 +26,7 @@ const config: Types.Core.GameConfig = {
   //   mode: Phaser.Scale.ZOOM_2X,
   //   // autoCenter: Phaser.Scale.CENTER_BOTH,
   // },
-  scene: [BootScene, MenuScene, GameScene, TransitionScene],
+  scene: [BootScene, MenuScene, IntroScene, GameScene, TransitionScene],
 }
 
 export default new Game(config)
