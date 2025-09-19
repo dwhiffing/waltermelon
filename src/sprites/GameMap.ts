@@ -1,4 +1,4 @@
-import { GameScene, tileSize } from './Game'
+import { GameScene, tileSize } from '../scenes/Game'
 import { MovingTile } from './MovingTile'
 
 const TILE_CRACK_DELAY = 100 // Start crack animation 1.5s after stepping

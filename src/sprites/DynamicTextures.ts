@@ -1,4 +1,4 @@
-import { GameScene } from './Game'
+import { GameScene } from '../scenes/Game'
 
 export class DynamicTextureManager {
   scene: GameScene

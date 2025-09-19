@@ -1,7 +1,7 @@
 import { Scene } from 'phaser'
-import { Player } from './Player'
-import { DynamicTextureManager } from './DynamicTextures'
-import { GameMap } from './GameMap'
+import { Player } from '../sprites/Player'
+import { DynamicTextureManager } from '../sprites/DynamicTextures'
+import { GameMap } from '../sprites/GameMap'
 
 export const tileSize = 16
 const timeScale = 1

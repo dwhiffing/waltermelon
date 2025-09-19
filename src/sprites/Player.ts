@@ -1,4 +1,4 @@
-import { GameScene, tileSize } from './Game'
+import { GameScene, tileSize } from '../scenes/Game'
 
 const SPEED = 150
 const MAX_SPEED = 100

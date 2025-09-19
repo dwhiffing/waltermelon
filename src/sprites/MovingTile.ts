@@ -1,4 +1,4 @@
-import { GameScene, tileSize } from './Game'
+import { GameScene, tileSize } from '../scenes/Game'
 
 export interface MovingTileConfig {
   x: number
