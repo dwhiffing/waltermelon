@@ -51,6 +51,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   stepIndex = 0
   lastStepState = ''
   isPlayingStepSounds = false
+  slideSoundObject: Phaser.Sound.BaseSound | null = null
+  isPlayingSlideSounds = false
 
   constructor(scene: GameScene) {
     const spawn = scene.gameMap.tilemap.findObject(
@@ -164,6 +166,22 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   handleStep = () => {
+    if (this.isWallSliding && !this.isPlayingSlideSounds) {
+      this.isPlayingSlideSounds = true
+      this.slideSoundObject = this.scene.sound.add('slide', {
+        volume: 0.15,
+        rate: 1,
+        loop: true,
+      })
+      this.scene.time.delayedCall(100, () => this.slideSoundObject?.play())
+    }
+
+    if (!this.isWallSliding && this.isPlayingSlideSounds) {
+      this.slideSoundObject?.destroy()
+      this.slideSoundObject = null
+      this.isPlayingSlideSounds = false
+    }
+
     const state: 'idle' | 'walk' | 'run' =
       this.xSpeed < 1 ||
       !this.onGround ||
@@ -482,6 +500,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const isLeft = tile.index === 3
     const lx = tile.pixelX + (isLeft ? 14 : -4)
     const ly = this.body.y + 1
+    this.scene.sound.play('grab', { volume: 0.15, rate: 0.8 })
     this.hangingLedge = { x: lx, y: ly, direction }
     this.body.setVelocity(0, 0).setAcceleration(0, 0)
     this.setFlipX(direction < 0).play('player-hang', true)
@@ -737,7 +756,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   get isAtMaxSpeed() {
-    return this.isRunning && this.xSpeed >= MAX_SPEED * 0.9
+    return this.isRunning && this.xSpeed >= MAX_SPEED * 0.8
   }
 
   get targetDragY() {

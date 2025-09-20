@@ -34,6 +34,8 @@ export class GameScene extends Scene {
     this.time.timeScale = timeScale
     this.anims.globalTimeScale = timeScale
     this.physics.world.timeScale = 1 / timeScale
+    this.tweens.timeScale = timeScale
+
     this.dynamicTextureManager = new DynamicTextureManager(this, 'player')
 
     this.gameMap = new GameMap(this)

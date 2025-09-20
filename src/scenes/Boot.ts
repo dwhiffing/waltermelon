@@ -32,6 +32,8 @@ export class BootScene extends Scene {
     this.load.audio('jump', 'assets/jump.mp3')
     this.load.audio('step', 'assets/step.mp3')
     this.load.audio('land', 'assets/land.mp3')
+    this.load.audio('grab', 'assets/grab.mp3')
+    this.load.audio('slide', 'assets/slide.mp3')
     this.load.audio('melon-shoot', 'assets/melon-shoot.mp3')
   }
 
