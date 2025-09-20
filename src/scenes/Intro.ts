@@ -327,7 +327,13 @@ export class IntroScene extends Scene {
   startGame = () => {
     if (this.startingGame) return
     this.startingGame = true
-    this.sound.play('music', { loop: true, volume: 1 })
+
+    const musicSound = this.sound.add('music', { volume: 1 })
+    musicSound.play()
+    musicSound.once('complete', () => {
+      this.sound.play('music-loop', { volume: 1, loop: true })
+    })
+
     this.scene.launch('Transition', { from: 'Intro', to: 'Menu' })
   }
 

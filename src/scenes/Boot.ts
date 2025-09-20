@@ -25,6 +25,7 @@ export class BootScene extends Scene {
     this.load.image('bg', 'assets/bg.png')
     this.load.tilemapTiledJSON('map', 'assets/map.json')
     this.load.audio('music', 'assets/music.mp3')
+    this.load.audio('music-loop', 'assets/music-loop.mp3')
     this.load.audio('crate-land', 'assets/crate-land.mp3')
     this.load.audio('slip', 'assets/slip.mp3')
     this.load.audio('voice', 'assets/voice.mp3')
