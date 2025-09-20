@@ -2,7 +2,7 @@ import { GameScene, tileSize } from '../scenes/Game'
 
 const SPEED = 150
 const MAX_SPEED = 100
-const JUMP_HEIGHT = 80
+const JUMP_HEIGHT = 84
 const MAX_JUMP_HOLD_TIME = 120
 const DRAG = 220
 const WALL_SLIDE_DRAG = 500
@@ -308,7 +308,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.jumpStartTime = this.scene.time.now
 
     if (canWallJump) {
-      this.doJump(-JUMP_HEIGHT, -this.wallDirection * 60)
+      this.doJump(JUMP_HEIGHT * -0.8, -this.wallDirection * 60)
       this.setFlipX(this.wallDirection === 1)
       this.isWallSliding = false
       this.wallDirection = 0
