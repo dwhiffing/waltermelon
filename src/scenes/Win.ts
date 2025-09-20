@@ -77,7 +77,7 @@ export class WinScene extends Scene {
         this.startGame()
       })
     })
-    this.time.delayedCall(500, () => {
+    this.time.delayedCall(1500, () => {
       this.typewriterText('\n            You win!', 100)
     })
   }

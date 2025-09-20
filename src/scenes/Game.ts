@@ -133,6 +133,8 @@ export class GameScene extends Scene {
 
     this.coinCount++
     this.showCoinCounter()
+
+    if (this.coinCount >= this.gameMap.totalCoins) this.onWin()
   }
 
   createCoinCounter() {
@@ -189,4 +191,8 @@ export class GameScene extends Scene {
 
   asyncCall = (time: number) =>
     new Promise((resolve) => this.time.delayedCall(time, resolve))
+
+  onWin = () => {
+    this.scene.launch('Transition', { from: 'Game', to: 'Win' })
+  }
 }

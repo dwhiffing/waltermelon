@@ -102,7 +102,8 @@ export class GameMap {
 
   loadCoins() {
     this.coins = this.scene.physics.add.group()
-    this.map.getObjectLayer('Coins')!.objects.forEach(({ x, y }: any) => {
+    const coinObjects = this.map.getObjectLayer('Coins')!.objects
+    coinObjects.forEach(({ x, y }: any) => {
       const coin = this.scene.physics.add
         .sprite(x!, y! - 2, 'coin')
         .setOrigin(0, 1)
@@ -118,6 +119,10 @@ export class GameMap {
       })
       coin.body.setAllowGravity(false)
     })
+  }
+
+  get totalCoins() {
+    return this.map.getObjectLayer('Coins')!.objects.length
   }
 
   checkPlayerSteppedOnTile(playerBody: Phaser.Physics.Arcade.Body): boolean {
