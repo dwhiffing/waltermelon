@@ -24,6 +24,10 @@ export class BootScene extends Scene {
     })
     this.load.image('bg', 'assets/bg.png')
     this.load.tilemapTiledJSON('map', 'assets/map.json')
+    this.load.audio('music', 'assets/music.mp3')
+    this.load.audio('crate-land', 'assets/crate-land.mp3')
+    this.load.audio('slip', 'assets/slip.mp3')
+    this.load.audio('voice', 'assets/voice.mp3')
   }
 
   create() {
@@ -33,7 +37,6 @@ export class BootScene extends Scene {
     this.anims.createFromAseprite('crack')
 
     // this.scene.start('Game')
-    this.scene.start('Menu')
-    // this.scene.start('Intro')
+    this.scene.launch('Transition', { from: 'Boot', to: 'Intro' })
   }
 }

@@ -65,9 +65,9 @@ export class IntroScene extends Scene {
       .setDepth(20)
       .setScrollFactor(0)
 
-    this.time.delayedCall(1000, () => {
+    this.time.delayedCall(500, () => {
       this.input.keyboard?.once('keydown-Z', this.startGame)
-      this.time.delayedCall(4000, () => {
+      this.time.delayedCall(4500, () => {
         this.text.setText(
           '  When suddlenly the\n        most unlucky\n     thing happened!',
         )
@@ -95,6 +95,7 @@ export class IntroScene extends Scene {
             x: 34,
             duration: CRATE_CRASH_TIME,
             onComplete: () => {
+              this.sound.play('crate-land', { volume: 0.3 })
               this.time.delayedCall(100, () => {
                 this.particles.x = this.crate.x - 5
                 this.particles.y = this.crate.y
@@ -119,6 +120,8 @@ export class IntroScene extends Scene {
             ease: 'Sine.easeIn',
           })
           this.banana.setAlpha(0)
+          this.sound.play('slip', { volume: 0.3 })
+
           this.player.play({ key: 'player-roll', repeat: 2, frameRate: 12 })
           this.add.tween({
             targets: [this.cameras.main.followOffset],
@@ -242,7 +245,8 @@ export class IntroScene extends Scene {
   startGame = () => {
     if (this.startingGame) return
     this.startingGame = true
-    this.scene.launch('Transition', { from: 'Intro', to: 'Game' })
+    this.sound.play('music', { loop: true, volume: 1 })
+    this.scene.launch('Transition', { from: 'Intro', to: 'Menu' })
   }
 
   update() {}

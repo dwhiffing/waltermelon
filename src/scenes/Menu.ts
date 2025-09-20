@@ -28,9 +28,9 @@ export class MenuScene extends Scene {
     this.tweens.add({
       targets: title,
       y: 55,
-      duration: 800,
-      delay: 500,
-      ease: 'Bounce.easeOut',
+      duration: 5000,
+      delay: 2000,
+      ease: 'Sine.easeOut',
       onComplete: () => {
         this.tweens.add({
           targets: title,
@@ -54,7 +54,7 @@ export class MenuScene extends Scene {
     })
 
     this.input.keyboard?.once('keydown-Z', () => {
-      this.scene.launch('Transition', { from: 'Menu', to: 'Intro' })
+      this.scene.launch('Transition', { from: 'Menu', to: 'Game' })
     })
   }
 
