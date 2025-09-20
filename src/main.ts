@@ -26,7 +26,7 @@ const config: Types.Core.GameConfig = {
   //   mode: Phaser.Scale.ZOOM_2X,
   //   // autoCenter: Phaser.Scale.CENTER_BOTH,
   // },
-  scene: [BootScene, MenuScene, IntroScene, GameScene, TransitionScene],
+  scene: [BootScene, IntroScene, MenuScene, GameScene, TransitionScene],
 }
 
 export default new Game(config)

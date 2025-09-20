@@ -15,7 +15,8 @@
   "homepage": "https://github.com/dwhiffing/waltermelon#readme",
   "scripts": {
     "dev": "vite --config vite/config.dev.mjs",
-    "build": "vite build --config vite/config.prod.mjs"
+    "build": "vite build --config vite/config.prod.mjs",
+    "music": "ffmpeg -i sources/trees.wav -codec:a libmp3lame -qscale:a 6 public/assets/music.mp3"
   },
   "devDependencies": {
     "terser": "^5.44.0",
