@@ -37,7 +37,14 @@ export class TransitionScene extends Scene {
     this.cellHeight = height / this.config.rows!
 
     this.createRectangles()
-    this.startAnimation(true)
+
+    if (this.config.from === 'Boot') {
+      this.rectangles.forEach((rect) => rect.setScale(1, 1))
+      this.scene.launch(this.config.to)
+      this.time.delayedCall(100, () => this.startAnimation(false))
+    } else {
+      this.startAnimation(true)
+    }
   }
 
   createRectangles() {
