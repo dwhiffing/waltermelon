@@ -263,7 +263,7 @@ export class GameMap {
 
     for (let x = 0; x < this.map.width; x++) {
       for (let y = 0; y < this.map.height; y++) {
-        const tile = this.map.getTileAt(x, y)
+        const tile = this.map.getTileAt(x, y, false, 'Level')
         if (!tile || (!tile?.collides && tile.index !== 4 && tile.index !== 5))
           continue
 

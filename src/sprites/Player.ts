@@ -245,7 +245,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   getSlope(tile: Phaser.Tilemaps.Tile): number | null {
     const tx = tile.x * tileSize
     const ty = tile.y * tileSize
-    const px = this.body.x + this.body.width / 2
+    const px = this.body.x + this.body.width / 2 + 1
     const py = this.body.y + this.body.height / 2
 
     if (Math.abs(py - ty) > 10) return null
@@ -467,6 +467,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   startSkid = () => {
+    if (this.isSkidding) return
     this.isSkidding = true
     this.scene.sound.play('skid', { volume: 0.15, rate: 1.6 })
     this.play('player-skid', true)
