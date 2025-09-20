@@ -488,15 +488,19 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (distY > 3 || distX > 4) return
 
     const playerFacingDirection = this.flipX ? -1 : 1
-    const direction = tile.index === 3 ? -1 : 1
+    const isLeft = tile.pixelX - this.x < 0
+    const direction = isLeft ? -1 : 1
     if (
       this.inputDirection !== direction ||
       playerFacingDirection !== direction ||
-      (tile.index !== 3 && tile.index !== 1)
+      (tile.index !== 3 &&
+        tile.index !== 1 &&
+        tile.index !== 45 &&
+        tile.index !== 33 &&
+        tile.index !== 35)
     )
       return
 
-    const isLeft = tile.index === 3
     const lx = tile.pixelX + (isLeft ? 14 : -4)
     const ly = this.body.y + 1
     this.scene.sound.play('grab', { volume: 0.3, rate: 0.5 })
