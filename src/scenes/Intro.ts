@@ -274,12 +274,12 @@ export class IntroScene extends Scene {
       this.player.play({ key: 'player-jump' })
       this.add.tween({
         targets: this.player,
-        x: -30,
+        x: -25,
         duration: 1000,
       })
       this.add.tween({
         targets: this.player,
-        y: 20,
+        y: 50,
         duration: 500,
         ease: 'Sine.easeOut',
         onComplete: () => {
@@ -289,7 +289,7 @@ export class IntroScene extends Scene {
       })
       this.add.tween({
         targets: this.player,
-        y: 190,
+        y: 180,
         delay: 500,
         duration: 500,
         ease: 'Sine.easeIn',

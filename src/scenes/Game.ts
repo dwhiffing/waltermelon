@@ -69,6 +69,7 @@ export class GameScene extends Scene {
     })
 
     this.cameras.main.startFollow(this.player, false, 1, 1, 0, 0)
+    this.cameras.main.setBackgroundColor('#012824')
   }
 
   update() {

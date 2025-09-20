@@ -70,9 +70,11 @@ export class MenuScene extends Scene {
       },
     })
 
-    this.input.keyboard?.once('keydown-Z', () => {
-      this.sound.play('jump')
-      this.scene.launch('Transition', { from: 'Menu', to: 'Game' })
+    this.time.delayedCall(1500, () => {
+      this.input.keyboard?.once('keydown-Z', () => {
+        this.sound.play('jump')
+        this.scene.launch('Transition', { from: 'Menu', to: 'Game' })
+      })
     })
   }
 

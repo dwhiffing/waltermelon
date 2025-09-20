@@ -173,7 +173,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         rate: 1,
         loop: true,
       })
-      this.scene.time.delayedCall(100, () => this.slideSoundObject?.play())
+      this.scene.time.delayedCall(120, () => this.slideSoundObject?.play())
     }
 
     if (!this.isWallSliding && this.isPlayingSlideSounds) {
