@@ -13,6 +13,9 @@ export class IntroScene extends Scene {
   crateLoop: Phaser.Time.TimerEvent
   text: Phaser.GameObjects.BitmapText
   startingGame = false
+  typewriterEvent: Phaser.Time.TimerEvent
+  targetText = ''
+  currentText = ''
 
   constructor() {
     super('Intro')
@@ -52,12 +55,7 @@ export class IntroScene extends Scene {
       .stop()
 
     this.text = this.add
-      .bitmapText(
-        5,
-        105,
-        'wayfarer',
-        'Walter was on his way\n home from the melon\n           garden...',
-      )
+      .bitmapText(5, 105, 'wayfarer', '')
       .setLineSpacing(3)
       .setTintFill(0xfcdeea)
       .setFontSize(128)
@@ -65,19 +63,31 @@ export class IntroScene extends Scene {
       .setDepth(20)
       .setScrollFactor(0)
 
+    this.time.delayedCall(1500, () => {
+      this.input.keyboard?.once('keydown-Z', () => {
+        this.sound.play('jump')
+        this.startGame()
+      })
+    })
     this.time.delayedCall(500, () => {
-      this.input.keyboard?.once('keydown-Z', this.startGame)
-      this.time.delayedCall(4500, () => {
-        this.text.setText(
+      this.time.delayedCall(1500, () => {
+        this.typewriterText(
+          'Walter was on his way\n home from the melon\n           garden...',
+          100,
+        )
+      })
+
+      this.time.delayedCall(6000, () => {
+        this.typewriterText(
           '  When suddlenly the\n        most unlucky\n     thing happened!',
+          100,
         )
       })
 
       this.add.tween({
         targets: [this.player, this.crate],
         x: 160,
-        // duration: 1000,
-        duration: 7000,
+        duration: 10000,
         onComplete: () => {
           this.crateLoop.destroy()
           this.time.addEvent({
@@ -100,6 +110,17 @@ export class IntroScene extends Scene {
                 this.particles.x = this.crate.x - 5
                 this.particles.y = this.crate.y
                 this.particles.start()
+
+                this.time.addEvent({
+                  delay: 50,
+                  repeat: 50,
+                  callback: () => {
+                    this.sound.play('melon-shoot', {
+                      volume: 0.2,
+                      rate: 0.8 + Math.random() * 0.2,
+                    })
+                  },
+                })
                 this.time.delayedCall(2500, () => this.particles.stop())
               })
             },
@@ -173,6 +194,66 @@ export class IntroScene extends Scene {
     })
   }
 
+  typewriterText = (
+    text: string,
+    delay: number = 50,
+    charsPerTick: number = 2,
+  ) => {
+    this.targetText = text
+    this.currentText = ''
+    this.text.setText('')
+
+    if (this.typewriterEvent) {
+      this.typewriterEvent.destroy()
+    }
+
+    let charIndex = 0
+    this.typewriterEvent = this.time.addEvent({
+      delay: delay,
+      repeat: -1,
+      callback: () => {
+        if (charIndex >= this.targetText.length || this.startingGame) {
+          this.typewriterEvent.destroy()
+          return
+        }
+
+        let charsAdded = 0
+        while (
+          charsAdded < charsPerTick &&
+          charIndex < this.targetText.length
+        ) {
+          const currentChar = this.targetText[charIndex]
+
+          // If current character is a space, add all consecutive spaces at once
+          if (currentChar === ' ') {
+            let spaceCount = 0
+            while (
+              charIndex + spaceCount < this.targetText.length &&
+              this.targetText[charIndex + spaceCount] === ' '
+            ) {
+              spaceCount++
+            }
+            this.currentText += ' '.repeat(spaceCount)
+            charIndex += spaceCount
+            charsAdded += spaceCount
+          } else {
+            this.currentText += currentChar
+            charIndex++
+            charsAdded++
+          }
+        }
+
+        if (charIndex % 1 === 0)
+          this.sound.play('voice', {
+            volume: 0.05,
+            rate: 0.8 + Math.random() * 0.1,
+          })
+
+        this.text.setText(this.currentText)
+      },
+    })
+  }
+
   walkToLedge = () => {
     this.player.play({ key: 'player-walk', repeat: -1, frameRate: 12 })
     this.add.tween({
@@ -186,6 +267,7 @@ export class IntroScene extends Scene {
   jumpOffLedge = () => {
     this.player.play({ key: 'player-idle', repeat: -1, frameRate: 6 })
     this.time.delayedCall(600, () => {
+      this.sound.play('jump', { volume: 0.3 })
       this.player.play({ key: 'player-jump' })
       this.add.tween({
         targets: this.player,
