@@ -22,6 +22,11 @@ export class GameScene extends Scene {
   particles: Phaser.GameObjects.Particles.ParticleEmitter
   panTween: Phaser.Tweens.Tween | null = null
   isPanned: boolean
+  coinCount: number = 0
+  cointText: Phaser.GameObjects.BitmapText
+  coinIcon: Phaser.GameObjects.Sprite
+  coinTween: Phaser.Tweens.Tween | null = null
+  coinsTimer: Phaser.Time.TimerEvent | null = null
 
   constructor() {
     super('Game')
@@ -65,6 +70,8 @@ export class GameScene extends Scene {
 
     this.cameras.main.startFollow(this.player, false, 1, 1, 0, 0)
     this.cameras.main.setBackgroundColor('#012824')
+
+    this.createCoinCounter()
   }
 
   update() {
@@ -123,6 +130,61 @@ export class GameScene extends Scene {
       rate: 1 + (Math.random() * 0.4 - 0.2),
     })
     this.particles.explode(8, this.player.x - 4, this.player.y + 9)
+
+    this.coinCount++
+    this.showCoinCounter()
+  }
+
+  createCoinCounter() {
+    const x = 180
+    const y = 10
+
+    this.coinIcon = this.add
+      .sprite(x, y, 'coin', 0)
+      .setScrollFactor(0)
+      .setDepth(100)
+
+    this.cointText = this.add
+      .bitmapText(x + 12, y - 4, 'wayfarer', '0')
+      .setScrollFactor(0)
+      .setTintFill(0xfcdeea)
+      .setDepth(100)
+  }
+
+  showCoinCounter() {
+    this.cointText.setText(this.coinCount.toString())
+    this.coinsTimer?.destroy()
+    this.coinsTimer = null
+
+    this.coinTween?.stop()
+    this.coinTween = this.tweens.add({
+      targets: [this.coinIcon, this.cointText],
+      x: 130,
+      duration: 800,
+      ease: 'Back.easeOut',
+      onUpdate: () => {
+        this.cointText.x = this.coinIcon.x + 12
+      },
+      onComplete: this.startHideTimer,
+    })
+  }
+
+  startHideTimer = () => {
+    this.coinsTimer?.destroy()
+    this.coinsTimer = this.time.delayedCall(1000, this.hideCoinCounter)
+  }
+
+  hideCoinCounter = () => {
+    this.coinTween?.stop()
+    this.coinTween = this.tweens.add({
+      targets: [this.coinIcon, this.cointText],
+      x: 180,
+      duration: 800,
+      ease: 'Back.easeIn',
+      onUpdate: () => {
+        this.cointText.x = this.coinIcon.x + 12
+      },
+    })
   }
 
   asyncCall = (time: number) =>
