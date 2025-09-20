@@ -1,3 +1,4 @@
+export const MUSIC_VOLUME = 0.4
 export class AudioToggle {
   static audioState: number = 0 // 0=all, 1=no-music, 2=muted
   private static musicKeys = ['music', 'music-loop']
@@ -27,7 +28,7 @@ export class AudioToggle {
   private static setMusicVolume(scene: Phaser.Scene, volume: number) {
     this.musicKeys.forEach((key) => {
       const sound = scene.sound.get(key)
-      ;(sound as any)?.setVolume(volume)
+      ;(sound as any)?.setVolume(volume === 1 ? MUSIC_VOLUME : 0)
     })
   }
 
