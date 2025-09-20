@@ -103,7 +103,6 @@ export class GameMap {
   loadCoins() {
     this.coins = this.scene.physics.add.group()
     this.map.getObjectLayer('Coins')!.objects.forEach(({ x, y }: any) => {
-      console.log(x, y)
       const coin = this.scene.physics.add
         .sprite(x!, y! - 2, 'coin')
         .setOrigin(0, 1)

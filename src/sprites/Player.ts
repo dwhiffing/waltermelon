@@ -293,7 +293,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.isJumping && this.jumpKeyHeld && this.body.velocity.y < 0) {
       const chargeDuration = this.scene.time.now - this.jumpStartTime
       if (chargeDuration <= MAX_JUMP_HOLD_TIME) {
-        const extraVelocity = 4
+        const deltaTime = this.scene.game.loop.delta / 1000
+        const extraVelocityPerSecond = 600
+        const extraVelocity = extraVelocityPerSecond * deltaTime
         this.body.setVelocityY(this.body.velocity.y - extraVelocity)
       }
     }
