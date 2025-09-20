@@ -1,4 +1,5 @@
 import { Scene } from 'phaser'
+import { GameTimer } from '../GameTimer'
 
 const timeScale = 1
 const START_Y = 77
@@ -78,7 +79,13 @@ export class WinScene extends Scene {
       })
     })
     this.time.delayedCall(1500, () => {
-      this.typewriterText('\n            You win!', 100)
+      const timeText = GameTimer.getTime()
+      this.typewriterText(
+        `\n            You win!\n${' '.repeat(
+          14 - timeText.length,
+        )}Time: ${timeText}`,
+        100,
+      )
     })
   }
 

@@ -1,6 +1,7 @@
 import { Scene } from 'phaser'
 import { Player } from '../sprites/Player'
 import { GameMap } from '../sprites/GameMap'
+import { GameTimer } from '../GameTimer'
 
 export const tileSize = 16
 const timeScale = 1
@@ -72,6 +73,7 @@ export class GameScene extends Scene {
     this.cameras.main.setBackgroundColor('#012824')
 
     this.createCoinCounter()
+    GameTimer.start()
   }
 
   update() {
@@ -193,6 +195,7 @@ export class GameScene extends Scene {
     new Promise((resolve) => this.time.delayedCall(time, resolve))
 
   onWin = () => {
+    GameTimer.stop()
     this.scene.launch('Transition', { from: 'Game', to: 'Win' })
   }
 }
