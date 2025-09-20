@@ -1,6 +1,5 @@
 import { Scene } from 'phaser'
 import { Player } from '../sprites/Player'
-import { DynamicTextureManager } from '../sprites/DynamicTextures'
 import { GameMap } from '../sprites/GameMap'
 
 export const tileSize = 16
@@ -23,8 +22,6 @@ export class GameScene extends Scene {
   particles: Phaser.GameObjects.Particles.ParticleEmitter
   panTween: Phaser.Tweens.Tween | null = null
   isPanned: boolean
-  dynamicTextureManager: DynamicTextureManager
-  colorSwapTimer = 0
 
   constructor() {
     super('Game')
@@ -35,8 +32,6 @@ export class GameScene extends Scene {
     this.anims.globalTimeScale = timeScale
     this.physics.world.timeScale = 1 / timeScale
     this.tweens.timeScale = timeScale
-
-    this.dynamicTextureManager = new DynamicTextureManager(this, 'player')
 
     this.gameMap = new GameMap(this)
 

@@ -14,8 +14,6 @@ const SIZE_Y = 20
 const OFFSET_X = 14
 const OFFSET_Y = 31
 const RUN_HOLD_TIME = 1000
-const CURSE_START_TIME = 13
-const CURSE_CYCLE_END = 20
 
 const STEP_INITIAL_DELAY = 0
 const STEP_REPEAT_DELAY = 360
@@ -41,8 +39,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   hangingLedge: { x: number; y: number; direction: number } | null = null
   tripDirection = 0
   tripCheck = false
-  curseTimer = 0
-  isBlinking = false
   isJumping = false
   isChargingJump = false
   jumpStartTime = 0
@@ -66,8 +62,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     super(scene, spawn.x ?? 0, (spawn.y ?? 0) - OFFSET_Y, 'player')
     this.scene = scene
 
-    // const flip = !!getProperty(spawn, 'flip')
-
     this.scene.physics.add.existing(this)
     this.scene.add.existing(this)
     this.play('player-jump')
@@ -77,12 +71,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.dust = this.scene.add
       .sprite(0, 0, 'dust')
       .play({ key: 'dust-walk', repeat: -1 }, true)
-
-    // this.scene.time.addEvent({
-    //   delay: 100,
-    //   loop: true,
-    //   callback: this.updateCurseTimer,
-    // })
   }
 
   update() {
@@ -592,55 +580,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       }
     }
     return tiles
-  }
-
-  updateCurseTimer = () => {
-    this.curseTimer = (this.curseTimer + 1) % (CURSE_CYCLE_END * 10)
-
-    const secs = this.curseTimer / 10
-    const shouldBlink =
-      (secs >= CURSE_START_TIME - 1 && secs < CURSE_START_TIME) ||
-      (secs >= CURSE_CYCLE_END - 1 && secs < CURSE_CYCLE_END)
-
-    if (shouldBlink) this.startBlinking()
-    if (!shouldBlink) this.stopBlinking()
-    if (!this.isBlinking) this.updateColorState()
-  }
-
-  startBlinking = () => {
-    if (this.isBlinking) return
-
-    this.isBlinking = true
-    let blinkState = true
-    this.scene.time.addEvent({
-      delay: 100,
-      repeat: 10,
-      callback: () => {
-        blinkState = !blinkState
-        this.updateColorState(blinkState)
-      },
-    })
-  }
-
-  stopBlinking = () => {
-    this.isBlinking = false
-    this.updateColorState()
-  }
-
-  updateColorState(isCursed = this.isCursed) {
-    if (isCursed) {
-      this.scene.dynamicTextureManager.swapColor(
-        { r: 252, g: 222, b: 234 },
-        { r: 255, g: 77, b: 109 },
-      )
-    } else {
-      this.scene.dynamicTextureManager.reset()
-    }
-  }
-
-  get isCursed() {
-    const secs = this.curseTimer / 10
-    return secs >= CURSE_START_TIME && secs < CURSE_CYCLE_END
   }
 
   get canStartWallSlide() {
