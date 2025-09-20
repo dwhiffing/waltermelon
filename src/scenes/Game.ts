@@ -167,7 +167,7 @@ export class GameScene extends Scene {
       duration: 800,
       ease: 'Back.easeOut',
       onUpdate: () => {
-        this.cointText.x = this.coinIcon.x + 12
+        this.cointText.x = this.coinIcon.x + 11
       },
       onComplete: this.startHideTimer,
     })
@@ -186,7 +186,7 @@ export class GameScene extends Scene {
       duration: 800,
       ease: 'Back.easeIn',
       onUpdate: () => {
-        this.cointText.x = this.coinIcon.x + 12
+        this.cointText.x = this.coinIcon.x + 11
       },
     })
   }
