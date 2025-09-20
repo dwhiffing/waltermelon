@@ -282,6 +282,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   doJump = (velocityY: number, velocityX?: number) => {
+    this.scene.sound.play('jump', {
+      volume: 0.2,
+      rate: 0.7 + Math.random() * 0.3,
+    })
     this.play('player-jump')
     if (velocityX) this.body.setVelocityX(velocityX)
     this.body.setVelocityY(velocityY)
@@ -327,6 +331,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   startLand = () => {
     this.isRunning = false
     this.walkHoldStartTime = this.scene.time.now
+
+    this.scene.sound.play('land', { volume: 0.3 })
 
     if (this.lastVelocity < 85) return (this.body.velocity.x *= 0.5)
 
