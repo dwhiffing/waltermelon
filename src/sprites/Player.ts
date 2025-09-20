@@ -502,7 +502,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const direction = tile.index === 3 ? -1 : 1
     if (
       this.inputDirection !== direction ||
-      playerFacingDirection !== direction
+      playerFacingDirection !== direction ||
+      (tile.index !== 3 && tile.index !== 1)
     )
       return
 
