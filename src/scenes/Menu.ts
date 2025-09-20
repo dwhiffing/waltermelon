@@ -32,13 +32,30 @@ export class MenuScene extends Scene {
       delay: 2000,
       ease: 'Sine.easeOut',
       onComplete: () => {
-        this.tweens.add({
-          targets: title,
-          y: 50,
-          duration: 1000,
-          ease: 'Sine.easeInOut',
-          yoyo: true,
+        let direction = 1
+        let currentY = 55
+        const minY = 50
+        const maxY = 55
+
+        this.time.addEvent({
           repeat: -1,
+          delay: 32,
+          callback: () => {
+            const progress = Math.abs(currentY - minY) / (maxY - minY)
+            const easedSpeed = Math.sin(progress * Math.PI) * 0.5 + 0.5
+
+            currentY += direction * Math.max(0.1, easedSpeed * 0.2)
+
+            if (currentY >= maxY) {
+              currentY = maxY
+              direction = -1
+            } else if (currentY <= minY) {
+              currentY = minY
+              direction = 1
+            }
+
+            title.y = Math.round(currentY)
+          },
         })
         let state = 0
         text.setAlpha(1)
