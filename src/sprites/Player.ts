@@ -166,17 +166,19 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   handleStep = () => {
-    if (this.isWallSliding && !this.isPlayingSlideSounds) {
+    if ((this.onSlope || this.isWallSliding) && !this.isPlayingSlideSounds) {
       this.isPlayingSlideSounds = true
       this.slideSoundObject = this.scene.sound.add('slide', {
         volume: 0.15,
-        rate: 1,
+        rate: this.onSlope ? 0.5 : 1,
         loop: true,
       })
-      this.scene.time.delayedCall(120, () => this.slideSoundObject?.play())
+      this.scene.time.delayedCall(this.onSlope ? 0 : 120, () =>
+        this.slideSoundObject?.play(),
+      )
     }
 
-    if (!this.isWallSliding && this.isPlayingSlideSounds) {
+    if (!(this.isWallSliding || this.onSlope) && this.isPlayingSlideSounds) {
       this.slideSoundObject?.destroy()
       this.slideSoundObject = null
       this.isPlayingSlideSounds = false
@@ -278,7 +280,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     if (isRolling) {
       if (this.anims.currentAnim?.key !== 'player-roll')
-        this.scene.sound.play('slip', { volume: 0.5 })
+        this.scene.sound.play('roll', { volume: 0.2 })
 
       this.play({ key: 'player-roll', frameRate: 8 }, true)
       this.once('animationcomplete', this.endRoll)
@@ -412,6 +414,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     this.body.setVelocityX(this.rollDirection * ROLL_SPEED)
 
+    this.scene.sound.play('roll', { volume: 0.2 })
     this.play({ key: 'player-roll', frameRate: 10 }).once(
       'animationcomplete',
       this.endRoll,
@@ -463,7 +466,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   startSkid = () => {
     this.isSkidding = true
-    this.scene.sound.play('skid', { volume: 0.3 })
+    this.scene.sound.play('skid', { volume: 0.15, rate: 1.6 })
     this.play('player-skid', true)
   }
 
@@ -504,7 +507,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const isLeft = tile.index === 3
     const lx = tile.pixelX + (isLeft ? 14 : -4)
     const ly = this.body.y + 1
-    this.scene.sound.play('grab', { volume: 0.15, rate: 0.8 })
+    this.scene.sound.play('grab', { volume: 0.3, rate: 0.5 })
     this.hangingLedge = { x: lx, y: ly, direction }
     this.body.setVelocity(0, 0).setAcceleration(0, 0)
     this.setFlipX(direction < 0).play('player-hang', true)

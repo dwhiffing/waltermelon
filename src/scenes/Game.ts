@@ -123,6 +123,7 @@ export class GameScene extends Scene {
   collectCoin = (_player: any, coin: any) => {
     this.gameMap.coins.remove(coin)
     coin.destroy()
+    this.sound.play('coin', { volume: 0.8 })
     this.particles.explode(8, this.player.x - 4, this.player.y + 9)
   }
 
