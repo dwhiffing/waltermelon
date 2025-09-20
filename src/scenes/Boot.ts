@@ -12,6 +12,7 @@ export class BootScene extends Scene {
     this.load.aseprite('crack', 'assets/crack.png', 'assets/crack.json')
     this.load.image('bits', 'assets/bits.png')
     this.load.image('crate', 'assets/crate.png')
+    this.load.image('crate-full', 'assets/crate-full.png')
     this.load.image('title', 'assets/title.png')
     this.load.aseprite('dust', 'assets/dust.png', 'assets/dust.json')
     this.load.spritesheet('tiles', 'assets/tiles.png', {

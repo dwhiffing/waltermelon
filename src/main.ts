@@ -2,6 +2,7 @@ import { BootScene } from './scenes/Boot'
 import { GameScene } from './scenes/Game'
 import { MenuScene } from './scenes/Menu'
 import { IntroScene } from './scenes/Intro'
+import { WinScene } from './scenes/Win'
 import { TransitionScene } from './scenes/Transition'
 import { AudioToggle } from './AudioToggle'
 
@@ -27,7 +28,14 @@ const config: Types.Core.GameConfig = {
   //   mode: Phaser.Scale.ZOOM_2X,
   //   // autoCenter: Phaser.Scale.CENTER_BOTH,
   // },
-  scene: [BootScene, IntroScene, MenuScene, GameScene, TransitionScene],
+  scene: [
+    BootScene,
+    IntroScene,
+    MenuScene,
+    GameScene,
+    WinScene,
+    TransitionScene,
+  ],
 }
 
 const game = new Game(config)
