@@ -1,6 +1,7 @@
 import { Scene } from 'phaser'
 import { AudioToggle, MUSIC_VOLUME } from '../AudioToggle'
 
+const timeScale = 1
 const START_Y = 77
 const START_X = 320
 export class IntroScene extends Scene {
@@ -23,6 +24,10 @@ export class IntroScene extends Scene {
   }
 
   create() {
+    this.time.timeScale = timeScale
+    this.anims.globalTimeScale = timeScale
+    this.physics.world.timeScale = 1 / timeScale
+    this.tweens.timeScale = timeScale
     AudioToggle.loadState(this)
 
     this.bgGraphics = this.add
