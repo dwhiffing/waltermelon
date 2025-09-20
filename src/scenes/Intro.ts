@@ -112,12 +112,12 @@ export class IntroScene extends Scene {
                 this.particles.start()
 
                 this.time.addEvent({
-                  delay: 50,
-                  repeat: 50,
+                  delay: 135,
+                  repeat: 17,
                   callback: () => {
                     this.sound.play('melon-shoot', {
                       volume: 0.2,
-                      rate: 0.8 + Math.random() * 0.2,
+                      rate: 0.3 + Math.random() * 0.2,
                     })
                   },
                 })
