@@ -277,6 +277,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.body.setMaxVelocity(maxV, 1000)
 
     if (isRolling) {
+      if (this.anims.currentAnim?.key !== 'player-roll')
+        this.scene.sound.play('slip', { volume: 0.5 })
+
       this.play({ key: 'player-roll', frameRate: 8 }, true)
       this.once('animationcomplete', this.endRoll)
     } else {
@@ -460,6 +463,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   startSkid = () => {
     this.isSkidding = true
+    this.scene.sound.play('skid', { volume: 0.3 })
     this.play('player-skid', true)
   }
 
