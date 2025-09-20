@@ -3,6 +3,7 @@ import { GameScene } from './scenes/Game'
 import { MenuScene } from './scenes/Menu'
 import { IntroScene } from './scenes/Intro'
 import { TransitionScene } from './scenes/Transition'
+import { AudioToggle } from './AudioToggle'
 
 import { Game, Types } from 'phaser'
 
@@ -29,4 +30,14 @@ const config: Types.Core.GameConfig = {
   scene: [BootScene, IntroScene, MenuScene, GameScene, TransitionScene],
 }
 
-export default new Game(config)
+const game = new Game(config)
+document.addEventListener('keydown', (event) => {
+  if (event.key.toLowerCase() === 'm') {
+    const currentScene = game.scene.getScenes(true)[0]
+    if (currentScene) {
+      AudioToggle.toggle(currentScene)
+    }
+  }
+})
+
+export default game

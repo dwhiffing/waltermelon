@@ -1,4 +1,5 @@
 import { Scene } from 'phaser'
+import { AudioToggle } from '../AudioToggle'
 
 const START_Y = 77
 const START_X = 320
@@ -22,6 +23,8 @@ export class IntroScene extends Scene {
   }
 
   create() {
+    AudioToggle.loadState(this)
+
     this.bgGraphics = this.add
       .tileSprite(-100, 0, 640, 200, 'bg')
       .setOrigin(0)
@@ -328,7 +331,9 @@ export class IntroScene extends Scene {
     if (this.startingGame) return
     this.startingGame = true
 
-    const musicSound = this.sound.add('music', { volume: 1 })
+    const musicSound = this.sound.add('music', {
+      volume: AudioToggle.audioState === 0 ? 1 : 0,
+    })
     musicSound.play()
     musicSound.once('complete', () => {
       this.sound.play('music-loop', { volume: 1, loop: true })
