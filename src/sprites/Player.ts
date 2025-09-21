@@ -13,7 +13,6 @@ const SIZE_X = 5
 const SIZE_Y = 20
 const OFFSET_X = 14
 const OFFSET_Y = 31
-const RUN_HOLD_TIME = 1000
 
 const STEP_INITIAL_DELAY = 0
 const STEP_REPEAT_DELAY = 360
@@ -26,7 +25,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   rollDirection = 0
   slopeDirection = 0
   isSkidding = false
-  isRunning = false
   isLanding = false
   isCrouching = false
   isExitingCrouch = false
@@ -35,7 +33,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   isWallSliding = false
   wallDirection = 0
   lastVelocity = 0
-  walkHoldStartTime = 0
   hangingLedge: { x: number; y: number; direction: number } | null = null
   tripDirection = 0
   tripCheck = false
@@ -95,7 +92,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     if (this.onGround) {
       if (this.xSpeed <= 1) this.tripCheck = false
-      if (this.xSpeed < 5) this.isRunning = false
       if (this.shouldLand) this.startLand()
       if (this.shouldRoll) this.startRoll()
       if (this.shouldStartCrouch) this.startCrouch()
@@ -104,9 +100,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       if (this.shouldStopSkid) this.endSkid()
       if (this.onSlope) this.handleOnSlope()
       if (this.shouldPlayGroundedAnims) {
-        const key =
-          this.xSpeed === 0 ? 'idle' : this.isAtMaxSpeed ? 'run' : 'walk'
-        const frameRate = this.isAtMaxSpeed ? 12 : this.xSpeed === 0 ? 4 : 8
+        const key = this.xSpeed === 0 ? 'idle' : this.isRunning ? 'run' : 'walk'
+        const frameRate = this.isRunning ? 12 : this.xSpeed === 0 ? 4 : 8
         this.play({ key: `player-${key}`, frameRate }, true)
       }
     }
@@ -121,34 +116,30 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   handleInput = () => {
     if (!this.canInput) return
 
-    if (this.moveDirection !== this.inputDirection && this.onGround) {
-      this.walkHoldStartTime = this.scene.time.now
+    const l = this.scene.cursors.left.isDown
+    const r = this.scene.cursors.right.isDown
+    const dir = l ? -1 : r ? 1 : 0
 
+    if (this.onGround && (l || r)) this.setFlipX(l)
+
+    if (this.moveDirection !== this.inputDirection && this.onGround) {
       if (this.isSkidding && !this.isTripping && !this.tripCheck) {
         this.tripCheck = true
         if (Math.random() < 0.5) return this.startTrip()
       }
-    } else if (this.inputDirection !== 0) {
-      const holdDuration = this.scene.time.now - this.walkHoldStartTime
-      if (
-        holdDuration >= RUN_HOLD_TIME &&
-        !this.isRunning &&
-        !this.onSlope &&
-        this.onGround
-      ) {
-        this.isRunning = true
-      }
     }
 
-    let speed = this.isRunning ? SPEED : SPEED * 0.5
-    const l = this.scene.cursors.left.isDown
-    const r = this.scene.cursors.right.isDown
-    const dir = l ? -1 : r ? 1 : 0
-    if (this.onGround && (l || r)) this.setFlipX(l)
-    this.body.setAccelerationX(speed * this.controlPercentage * dir)
+    if (dir !== 0) {
+      const currentSpeedPercent = this.xSpeed / this.maxSpeed
+      const acceleration =
+        dir === this.moveDirection
+          ? SPEED * (1 - currentSpeedPercent * 0.5)
+          : SPEED
 
-    if (!(l || r) && !this.onSlope && !this.isRolling)
+      this.body.setAccelerationX(acceleration * this.controlPercentage * dir)
+    } else if (!this.onSlope && !this.isRolling) {
       this.body.setAccelerationX(0)
+    }
 
     this.scene.time.delayedCall(100, () => (this.prevInputDirection = dir))
   }
@@ -180,7 +171,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.isRolling ||
       this.isSkidding
         ? 'idle'
-        : this.isAtMaxSpeed
+        : this.isRunning
         ? 'run'
         : 'walk'
 
@@ -348,14 +339,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     this.isPlayingStepSounds = true
     this.scene.time.delayedCall(
-      STEP_INITIAL_DELAY + (this.isAtMaxSpeed ? 150 : 0),
+      STEP_INITIAL_DELAY + (this.isRunning ? 150 : 0),
       () => {
         if (!this.isPlayingStepSounds) return
         this.playStepSound()
 
         this.stepSoundEvent?.destroy()
         this.stepSoundEvent = this.scene.time.addEvent({
-          delay: STEP_REPEAT_DELAY - (this.isAtMaxSpeed ? 70 : 0),
+          delay: STEP_REPEAT_DELAY - (this.isRunning ? 70 : 0),
           loop: true,
           callback: this.playStepSound,
         })
@@ -372,14 +363,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   playStepSound = () => {
-    if (
-      !this.isPlayingStepSounds ||
-      (!this.scene.cursors.left.isDown && !this.scene.cursors.right.isDown)
-    )
-      return
+    if (!this.isPlayingStepSounds) return
 
     this.scene.sound.play('step', {
-      volume: this.isAtMaxSpeed ? 0.9 : 0.8,
+      volume: this.isRunning ? 0.9 : 0.8,
       rate: 1 + (this.stepIndex % 2) * 0.3,
     })
     this.stepIndex++
@@ -418,9 +405,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   startLand = () => {
-    this.isRunning = false
-    this.walkHoldStartTime = this.scene.time.now
-
     this.scene.sound.play('land', { volume: 0.4, rate: 1 })
 
     if (this.lastVelocity < 85) return (this.body.velocity.x *= 0.5)
@@ -628,7 +612,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   get shouldRoll() {
-    return this.isHoldingDown && this.isAtMaxSpeed && this.xSpeed > 80
+    return this.isHoldingDown && this.isRunning && this.xSpeed > 80
   }
 
   get shouldStartSkid() {
@@ -698,8 +682,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     )
   }
 
+  get isRunning() {
+    return this.xSpeed >= MAX_SPEED * 0.6
+  }
+
   get maxSpeed() {
-    return this.isRunning ? MAX_SPEED : MAX_SPEED * 0.65
+    return MAX_SPEED
   }
 
   get targetDragX() {
@@ -707,10 +695,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.onSlope) return 9
 
     return this.isRunning ? DRAG : DRAG * 2
-  }
-
-  get isAtMaxSpeed() {
-    return this.isRunning && this.xSpeed >= MAX_SPEED * 0.8
   }
 
   get targetDragY() {
