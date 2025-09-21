@@ -11,6 +11,7 @@ const WALL_SLIDE_SPEED = 25
 const AIR_CONTROL_PERCENT = 0.45
 const STANDING_LONG_JUMP_VELOCITY = 45
 const HORIZONTAL_COYOTE_TIME = 150
+const COYOTE_TIME = 100
 const ROLL_SPEED = 200
 const SIZE_X = 5
 const SIZE_Y = 20
@@ -45,6 +46,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   jumpKeyHeld = false
   horizontalCoyoteStartTime = 0
   lastHorizontalInput = 0
+  leftGroundTime = 0
+  wasOnGroundLastFrame = false
   stepSoundEvent: Phaser.Time.TimerEvent | null = null
   stepIndex = 0
   lastStepState = ''
@@ -74,10 +77,20 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.dust = this.scene.add
       .sprite(0, 0, 'dust')
       .play({ key: 'dust-walk', repeat: -1 }, true)
+
+    this.wasOnGroundLastFrame = true
   }
 
   update() {
     this.setDrag(this.targetDragX, this.targetDragY)
+
+    const currentlyOnGround = this.onGround
+    if (this.wasOnGroundLastFrame && !currentlyOnGround && !this.isJumping) {
+      this.leftGroundTime = this.scene.time.now
+    } else if (!this.wasOnGroundLastFrame && currentlyOnGround) {
+      this.leftGroundTime = 0
+    }
+    this.wasOnGroundLastFrame = currentlyOnGround
 
     this.setDepth(this.hangingLedge ? -1 : 10)
     this.dust
@@ -328,13 +341,20 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       !this.isCrouching &&
       !this.isExitingCrouch
     const canWallJump = this.isWallSliding
+    const canCoyoteJump =
+      this.isInCoyoteTime &&
+      !this.isRolling &&
+      !this.isCrouching &&
+      !this.isExitingCrouch
 
-    if (!canNormalJump && !canWallJump) return
+    if (!canNormalJump && !canWallJump && !canCoyoteJump) return
 
     this.jumpKeyHeld = true
     this.jumpStartTime = this.scene.time.now
     this.horizontalCoyoteStartTime = this.scene.time.now
     this.lastHorizontalInput = this.inputDirection
+
+    this.leftGroundTime = 0
 
     if (canWallJump) {
       this.doJump(JUMP_HEIGHT * -0.8, -this.wallDirection * 68)
@@ -446,8 +466,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   startLand = () => {
     this.scene.sound.play('land', { volume: 0.4, rate: 1 })
 
-    // Reset horizontal coyote time when landing
     this.horizontalCoyoteStartTime = 0
+    this.leftGroundTime = 0
 
     if (this.lastVelocity < 85) return (this.body.velocity.x *= 0.5)
 
@@ -647,6 +667,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   get onGround() {
     return this.body.blocked.down || this.onSlope
+  }
+
+  get isInCoyoteTime() {
+    return (
+      this.leftGroundTime > 0 &&
+      this.scene.time.now - this.leftGroundTime < COYOTE_TIME
+    )
   }
 
   get isTripping() {
