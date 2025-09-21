@@ -269,11 +269,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   getSlope(tile: Phaser.Tilemaps.Tile): number | null {
     const tx = tile.x * tileSize
     const ty = tile.y * tileSize
-    const px = this.body.x + this.body.width / 2 + 1
+    const px = this.body.x + this.body.width / 2
     const py = this.body.y + this.body.height / 2
 
     if (Math.abs(py - ty) > 10) return null
-    if (px < tx || px > tx + tileSize) return null
+    if (px < tx - 1 || px > tx + tileSize + 1) return null
 
     const approachingFromTop =
       this.onGround && this.slopeDirection === 0 && this.body.velocity.y >= 0
