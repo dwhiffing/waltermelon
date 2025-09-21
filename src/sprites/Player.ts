@@ -118,6 +118,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const currentlyOnGround = this.onGround
     if (this.wasOnGroundLastFrame && !currentlyOnGround && !this.isJumping) {
       this.leftGroundTime = this.scene.time.now
+      if (this.xSpeed < 50) this.detectLedgeGrab()
     } else if (!this.wasOnGroundLastFrame && currentlyOnGround) {
       this.leftGroundTime = 0
     }
@@ -126,6 +127,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.setDepth(this.hangingLedge ? -1 : 10)
 
     if (this.hangingLedge) {
+      this.stopStepSounds()
       return this.handleHangingOnLedge()
     } else {
       this.detectLedge()
@@ -559,22 +561,36 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   // ledges
+  detectLedgeGrab = () => {
+    const direction =
+      this.moveDirection === 0 ? 0 : this.moveDirection > 0 ? -1 : 1
+    if (direction === 0) return
+
+    const tile = this.getAdjacentTiles()[0]
+    if (this.isValidLedge(tile)) this.grabLedge(tile)
+  }
+
+  isValidLedge = (tile?: Phaser.Tilemaps.Tile) => {
+    if (
+      !tile ||
+      this.scene.gameMap.layer.getTileAt(tile.x, tile.y - 1) ||
+      (tile.index !== 3 &&
+        tile.index !== 1 &&
+        tile.index !== 45 &&
+        tile.index !== 33 &&
+        tile.index !== 34 &&
+        tile.index !== 31 &&
+        tile.index !== 35)
+    )
+      return false
+    return true
+  }
+
   detectLedge = () => {
     if (!this.onGround && this.body.velocity.y > 250) return
 
     const tile = this.getAdjacentTiles()[0]
-    if (!tile) return
-    if (
-      tile.index !== 3 &&
-      tile.index !== 1 &&
-      tile.index !== 45 &&
-      tile.index !== 33 &&
-      tile.index !== 35
-    )
-      return
-
-    // return if there is a tile directly above this tile
-    if (this.scene.gameMap.layer.getTileAt(tile.x, tile.y - 1)) return
+    if (!this.isValidLedge(tile)) return
 
     const distX = Math.abs(tile.pixelX - this.x) - (this.flipX ? 19 : 0)
     const distY = Math.abs(tile.pixelY - this.y)
@@ -586,6 +602,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const direction = isLeft ? -1 : 1
     if (playerFacingDirection !== direction) return
 
+    this.grabLedge(tile)
+  }
+
+  grabLedge = (tile: Phaser.Tilemaps.Tile) => {
+    const isLeft = tile.pixelX - this.x < 0
+    const direction = isLeft ? -1 : 1
     const lx = tile.pixelX + (isLeft ? 14 : -4)
     const ly = tile.pixelY - 2
     this.scene.sound.play('grab', { volume: 0.3, rate: 0.5 })
@@ -610,10 +632,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       const c = this.scene.cursors
       const l = this.hangingLedge.direction === 1
       const toward = l ? c.right.isDown : c.left.isDown
-      const away = l ? c.left.isDown : c.right.isDown
 
       if (toward || this.scene.zKey.isDown) this.startPullUp()
-      if (away || this.isHoldingDown) this.dropFromHang()
+      if (this.isHoldingDown) this.dropFromHang()
     }
   }
 
