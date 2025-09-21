@@ -1,13 +1,14 @@
 import { GameScene, tileSize } from '../scenes/Game'
+import { MovingTile } from './MovingTile'
 
-const SPEED = 150
+const ACCELERATION = 160
 const MAX_SPEED = 100
-const JUMP_HEIGHT = 84
+const JUMP_HEIGHT = 88
 const MAX_JUMP_HOLD_TIME = 120
-const DRAG = 220
+const DRAG = 250
 const WALL_SLIDE_DRAG = 500
 const WALL_SLIDE_SPEED = 25
-const AIR_CONTROL_PERCENT = 0.3
+const AIR_CONTROL_PERCENT = 0.45
 const ROLL_SPEED = 200
 const SIZE_X = 5
 const SIZE_Y = 20
@@ -46,6 +47,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   isPlayingStepSounds = false
   slideSoundObject: Phaser.Sound.BaseSound | null = null
   isPlayingSlideSounds = false
+  movingTile: MovingTile | null = null
 
   constructor(scene: GameScene) {
     const spawn = scene.gameMap.tilemap.findObject(
@@ -133,8 +135,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       const currentSpeedPercent = this.xSpeed / this.maxSpeed
       const acceleration =
         dir === this.moveDirection
-          ? SPEED * (1 - currentSpeedPercent * 0.5)
-          : SPEED
+          ? ACCELERATION * (1 - currentSpeedPercent * 0.5)
+          : ACCELERATION
 
       this.body.setAccelerationX(acceleration * this.controlPercentage * dir)
     } else if (!this.onSlope && !this.isRolling) {
@@ -299,7 +301,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.jumpStartTime = this.scene.time.now
 
     if (canWallJump) {
-      this.doJump(JUMP_HEIGHT * -0.8, -this.wallDirection * 60)
+      this.doJump(JUMP_HEIGHT * -0.8, -this.wallDirection * 68)
       this.setFlipX(this.wallDirection === 1)
       this.isWallSliding = false
       this.wallDirection = 0
@@ -313,7 +315,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     const { left, right } = this.scene.cursors
     let x =
-      left.isDown && this.flipX ? -35 : right.isDown && !this.flipX ? 35 : 0
+      left.isDown && this.flipX ? -45 : right.isDown && !this.flipX ? 45 : 0
     if (Math.abs(x) < Math.abs(this.body.velocity.x)) x = this.body.velocity.x
     this.doJump(-JUMP_HEIGHT, x)
   }
@@ -460,10 +462,19 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   // ledges
   detectLedge = () => {
-    if (!this.onGround && this.body.velocity.y > 150) return
+    if (!this.onGround && this.body.velocity.y > 250) return
 
     const tile = this.getAdjacentTiles()[0]
     if (!tile) return
+    if (
+      tile.index !== 3 &&
+      tile.index !== 1 &&
+      tile.index !== 45 &&
+      tile.index !== 33 &&
+      tile.index !== 35
+    )
+      return
+
     // return if there is a tile directly above this tile
     if (this.scene.gameMap.layer.getTileAt(tile.x, tile.y - 1)) return
 
@@ -476,17 +487,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const direction = isLeft ? -1 : 1
     if (
       this.inputDirection !== direction ||
-      playerFacingDirection !== direction ||
-      (tile.index !== 3 &&
-        tile.index !== 1 &&
-        tile.index !== 45 &&
-        tile.index !== 33 &&
-        tile.index !== 35)
+      playerFacingDirection !== direction
     )
       return
 
     const lx = tile.pixelX + (isLeft ? 14 : -4)
-    const ly = this.body.y + 1
+    const ly = tile.pixelY - 2
     this.scene.sound.play('grab', { volume: 0.3, rate: 0.5 })
     this.hangingLedge = { x: lx, y: ly, direction }
     this.body.setVelocity(0, 0).setAcceleration(0, 0)
