@@ -1,11 +1,11 @@
 import { GameScene, tileSize } from '../scenes/Game'
 import { MovingTile } from './MovingTile'
 
-const TILE_CRACK_DELAY = 100 // Start crack animation 1.5s after stepping
-const TILE_REMOVE_DELAY = 2200 // Remove tile 2s after stepping
-const TILE_RESTORE_DELAY = 2200 // Restore tile 3.4s after stepping
-const TILE_GROWTH_DELAY = 100 // Start growth animation 1.5s before restoration
-const CRUMBLING_TILES = [45] // Tiles that crumble when stepped on
+const TILE_CRACK_DELAY = 100 // grace period before cracking starts
+const TILE_REMOVE_DELAY = 1500 // time it takes for them to destroy
+const TILE_RESTORE_DELAY = 5000 // total time before tile is fully restored
+const TILE_GROWTH_DELAY = 2500 // time before it starts to grow back
+const CRUMBLING_TILES = [45, 33, 34, 35, 23, 31, 39] // Tiles that crumble when stepped on
 const COLLISION_TILES = [
   1, 2, 3, 9, 10, 11, 16, 17, 18, 19, 20, 21, 23, 28, 29, 31, 32, 33, 34, 35,
   39, 45, 49, 50, 51, 55, 57, 58, 59,
@@ -140,26 +140,33 @@ export class GameMap {
 
   checkPlayerSteppedOnTile(playerBody: Phaser.Physics.Arcade.Body): boolean {
     const centerX = playerBody.x + playerBody.width / 2
+    const leftX = centerX - 2
+    const rightX = centerX + 2
     const bottomY = playerBody.y + playerBody.height
-    const tileX = Math.floor(centerX / tileSize)
+    const leftTileX = Math.floor(leftX / tileSize)
+    const rightTileX = Math.floor(rightX / tileSize)
     const tileY = Math.floor(bottomY / tileSize)
-    const tile = this.layer.getTileAt(tileX, tileY)
 
-    if (!tile?.collides) return false
+    for (const tileX of [leftTileX, rightTileX]) {
+      const tile = this.layer.getTileAt(tileX, tileY)
 
-    // Only process tiles that are configured to crumble
-    if (!CRUMBLING_TILES.includes(tile.index)) return false
+      if (!tile?.collides) continue
 
-    const tileKey = `${tileX},${tileY}`
-    if (this.steppedOnTiles.has(tileKey)) return false
+      if (!CRUMBLING_TILES.includes(tile.index)) continue
 
-    this.steppedOnTiles.add(tileKey)
-    this.tilesToRemove.set(tileKey, {
-      removeTime: this.scene.time.now + TILE_REMOVE_DELAY,
-      crackStartTime: this.scene.time.now + TILE_CRACK_DELAY,
-    })
+      const tileKey = `${tileX},${tileY}`
+      if (this.steppedOnTiles.has(tileKey)) continue
 
-    return true
+      this.steppedOnTiles.add(tileKey)
+      this.tilesToRemove.set(tileKey, {
+        removeTime: this.scene.time.now + TILE_REMOVE_DELAY,
+        crackStartTime: this.scene.time.now + TILE_CRACK_DELAY,
+      })
+
+      return true
+    }
+
+    return false
   }
 
   getTileWorldPosition(tileKey: string) {
@@ -179,7 +186,10 @@ export class GameMap {
       .sprite(x, y, spriteKey)
       .setOrigin(0, 0)
       .setDepth(5)
-      .play({ key: spriteKey, frameRate: 4 })
+      .play({
+        key: spriteKey,
+        frameRate: spriteKey === 'crack' ? 6 : 2.5,
+      })
 
     spriteMap.set(tileKey, sprite)
     return sprite
