@@ -24,6 +24,24 @@ const MAX_FALLING_SPEED = 400
 const STEP_INITIAL_DELAY = 0
 const STEP_REPEAT_DELAY = 360
 
+const DUST_WALK_PARTICLE: Phaser.Types.GameObjects.Particles.ParticleEmitterConfig =
+  {
+    speedY: { min: -8, max: -10 },
+    speedX: { min: -8, max: 8 },
+    frame: [3],
+    lifespan: { max: 2000, min: 200 },
+    scale: { start: 0.75, end: 0 },
+  }
+
+const DUST_SLIDE_PARTICLE: Phaser.Types.GameObjects.Particles.ParticleEmitterConfig =
+  {
+    speedY: { min: -8, max: -20 },
+    speedX: { min: -4, max: 4 },
+    frame: [3],
+    lifespan: { max: 1500, min: 200 },
+    scale: { start: 0.75, end: 0 },
+  }
+
 export class Player extends Phaser.Physics.Arcade.Sprite {
   declare body: Phaser.Physics.Arcade.Body
   scene: GameScene
@@ -307,6 +325,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     } else {
       this.play('player-slope-slide', true)
     }
+    this.scene.dustParticles
+      .setConfig(DUST_SLIDE_PARTICLE)
+      .explode(1, this.body.x, this.body.y + 18)
   }
 
   handleJump = () => {
@@ -421,7 +442,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       volume: this.isRunning ? 0.9 : 0.8,
       rate: 1 + (this.stepIndex % 2) * 0.3,
     })
-    this.scene.dustParticles.explode(2, this.body.x, this.body.y + 18)
+    this.scene.dustParticles
+      .setConfig(DUST_WALK_PARTICLE)
+      .explode(2, this.body.x, this.body.y + 18)
     this.stepIndex++
   }
 

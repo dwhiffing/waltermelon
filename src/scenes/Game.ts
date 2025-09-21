@@ -16,14 +16,6 @@ const MELON_PARTICLE: Phaser.Types.GameObjects.Particles.ParticleEmitterConfig =
     lifespan: { max: 800, min: 500 },
     scale: { start: 2, end: 0 },
   }
-const DUST_PARTICLE: Phaser.Types.GameObjects.Particles.ParticleEmitterConfig =
-  {
-    speedY: { min: -2, max: -10 },
-    speedX: { min: -4, max: 4 },
-    frame: [3],
-    lifespan: { max: 2000, min: 200 },
-    scale: { start: 0.75, end: 0 },
-  }
 
 export class GameScene extends Scene {
   player: Player
@@ -59,9 +51,7 @@ export class GameScene extends Scene {
     this.melonParticles = this.add
       .particles(0, 0, 'bits', MELON_PARTICLE)
       .setDepth(60)
-    this.dustParticles = this.add
-      .particles(0, 0, 'bits', DUST_PARTICLE)
-      .setDepth(1)
+    this.dustParticles = this.add.particles(0, 0, 'bits').setDepth(1)
 
     this.cursors = this.input.keyboard!.createCursorKeys()
     this.zKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.Z)
