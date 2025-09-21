@@ -96,6 +96,7 @@ export class GameMap {
     const currentlyOverlapping = this.checkOverlayTileOverlap()
     if (currentlyOverlapping !== this.isOverlappingOverlay) {
       this.isOverlappingOverlay = currentlyOverlapping
+      this.overlay.setDepth(currentlyOverlapping ? 50 : 2)
       this.tweenOverlayAlpha(currentlyOverlapping ? 0.5 : 1.0)
     }
   }
