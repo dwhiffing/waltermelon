@@ -6,14 +6,24 @@ import { WatermelonCompass } from '../sprites/WatermelonCompass'
 
 export const tileSize = 16
 const timeScale = 1
-const MELON_PARTICLE: any = {
-  speedY: { min: -50, max: -120 },
-  speedX: { min: -60, max: 60 },
-  angle: { min: 240, max: 290 },
-  gravityY: 240,
-  lifespan: { max: 1200, min: 500 },
-  scale: { start: 2, end: 0 },
-}
+const MELON_PARTICLE: Phaser.Types.GameObjects.Particles.ParticleEmitterConfig =
+  {
+    speedY: { min: -80, max: -120 },
+    speedX: { min: -60, max: 60 },
+    angle: { min: 240, max: 290 },
+    gravityY: 220,
+    frame: [1, 1, 1, 2, 0],
+    lifespan: { max: 800, min: 500 },
+    scale: { start: 2, end: 0 },
+  }
+const DUST_PARTICLE: Phaser.Types.GameObjects.Particles.ParticleEmitterConfig =
+  {
+    speedY: { min: -2, max: -10 },
+    speedX: { min: -4, max: 4 },
+    frame: [3],
+    lifespan: { max: 2000, min: 200 },
+    scale: { start: 0.75, end: 0 },
+  }
 
 export class GameScene extends Scene {
   player: Player
@@ -21,7 +31,8 @@ export class GameScene extends Scene {
   zKey: Phaser.Input.Keyboard.Key
   xKey: Phaser.Input.Keyboard.Key
   gameMap: GameMap
-  particles: Phaser.GameObjects.Particles.ParticleEmitter
+  melonParticles: Phaser.GameObjects.Particles.ParticleEmitter
+  dustParticles: Phaser.GameObjects.Particles.ParticleEmitter
   panTween: Phaser.Tweens.Tween | null = null
   isPanned: boolean
   coinCount: number = 0
@@ -45,9 +56,12 @@ export class GameScene extends Scene {
 
     this.player = new Player(this)
     this.watermelonCompass = new WatermelonCompass(this, this.player)
-    this.particles = this.add
+    this.melonParticles = this.add
       .particles(0, 0, 'bits', MELON_PARTICLE)
       .setDepth(60)
+    this.dustParticles = this.add
+      .particles(0, 0, 'bits', DUST_PARTICLE)
+      .setDepth(1)
 
     this.cursors = this.input.keyboard!.createCursorKeys()
     this.zKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.Z)
@@ -136,7 +150,7 @@ export class GameScene extends Scene {
       volume: 0.5,
       rate: 1 + (Math.random() * 0.4 - 0.2),
     })
-    this.particles.explode(8, this.player.x - 4, this.player.y + 9)
+    this.melonParticles.explode(12, coin.x + 4, coin.y - 8)
 
     this.coinCount++
     this.showCoinCounter()

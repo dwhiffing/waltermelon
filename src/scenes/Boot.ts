@@ -10,7 +10,10 @@ export class BootScene extends Scene {
     this.load.aseprite('player', 'assets/player.png', 'assets/player.json')
     this.load.aseprite('growth', 'assets/growth.png', 'assets/growth.json')
     this.load.aseprite('crack', 'assets/crack.png', 'assets/crack.json')
-    this.load.image('bits', 'assets/bits.png')
+    this.load.spritesheet('bits', 'assets/bits.png', {
+      frameWidth: 9,
+      frameHeight: 9,
+    })
     this.load.image('crate', 'assets/crate.png')
     this.load.image('crate-full', 'assets/crate-full.png')
     this.load.image('title', 'assets/title.png')

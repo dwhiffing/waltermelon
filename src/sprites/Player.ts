@@ -438,6 +438,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       volume: this.isRunning ? 0.9 : 0.8,
       rate: 1 + (this.stepIndex % 2) * 0.3,
     })
+    this.scene.dustParticles.explode(2, this.body.x, this.body.y + 18)
     this.stepIndex++
   }
 
