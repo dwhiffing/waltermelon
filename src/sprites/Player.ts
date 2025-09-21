@@ -19,6 +19,8 @@ const SIZE_Y = 20
 const OFFSET_X = 14
 const OFFSET_Y = 31
 
+const MAX_FALLING_SPEED = 400
+
 const STEP_INITIAL_DELAY = 0
 const STEP_REPEAT_DELAY = 360
 
@@ -114,7 +116,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.canStartWallSlide) this.startWallSlide()
     if (this.isWallSliding) this.handleWallSlide()
     if (this.shouldPlayFallAnim) this.play({ key: 'player-fall' }, true)
-    if (this.onGround && !this.onSlope) this.setMaxVelocity(this.maxSpeed, 1000)
+    if (this.onGround && !this.onSlope)
+      this.setMaxVelocity(this.maxSpeed, MAX_FALLING_SPEED)
 
     if (this.onGround) {
       if (this.xSpeed <= 1) this.tripCheck = false
@@ -310,7 +313,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       isRolling ? this.moveDirection === -1 : this.slopeDirection < 0,
     )
     this.body.setAccelerationX(this.slopeDirection * dx)
-    this.body.setMaxVelocity(maxV, 1000)
+    this.body.setMaxVelocity(maxV, MAX_FALLING_SPEED)
 
     if (isRolling) {
       if (this.anims.currentAnim?.key !== 'player-roll')
