@@ -540,7 +540,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     const distX = Math.abs(tile.pixelX - this.x) - (this.flipX ? 19 : 0)
     const distY = Math.abs(tile.pixelY - this.y)
-    if (distY > 3 || distX > 4) return
+    const acceptableDistY = this.isWallSliding ? 12 : 4
+    if (distY > acceptableDistY || distX > 4) return
 
     const playerFacingDirection = this.flipX ? -1 : 1
     const isLeft = tile.pixelX - this.x < 0
