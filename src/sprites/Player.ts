@@ -373,7 +373,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       return
     }
     if (this.onSlope) {
-      this.doJump(-(JUMP_HEIGHT / 1.5), this.slopeDirection * -25)
+      this.setMaxVelocity(this.maxSpeed, MAX_FALLING_SPEED)
+      this.doJump(JUMP_HEIGHT * -1, this.slopeDirection * -65)
       this.slopeDirection = 0
       return
     }
