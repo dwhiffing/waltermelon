@@ -83,6 +83,9 @@ export class GameMap {
       this.movingTiles.push(movingTile)
     })
     this.loadCoins()
+    this.loadCrate()
+
+    console.log(this.totalCoins)
   }
 
   update() {
@@ -99,6 +102,15 @@ export class GameMap {
       this.overlay.setDepth(currentlyOverlapping ? 50 : 2)
       this.tweenOverlayAlpha(currentlyOverlapping ? 0.5 : 1.0)
     }
+  }
+
+  loadCrate() {
+    const crateObject = this.map.getObjectLayer('Crate')!.objects[0]
+    console.log({ crateObject })
+    this.scene.add
+      .image(crateObject.x!, crateObject.y! + 2, 'crate')
+      .setOrigin(0, 1)
+      .setAngle(-90)
   }
 
   loadCoins() {
