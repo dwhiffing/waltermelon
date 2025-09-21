@@ -6,6 +6,7 @@ const COMPASS_RADIUS = 20
 export class WatermelonCompass extends Phaser.GameObjects.Sprite {
   scene: GameScene
   player: Player
+  active = false
 
   constructor(scene: GameScene, player: Player) {
     super(scene, player.x, player.y, 'coin', 1)
@@ -22,7 +23,7 @@ export class WatermelonCompass extends Phaser.GameObjects.Sprite {
     const m = this.findClosestWatermelon()
     const p = this.player
 
-    if (!m || p.hangingLedge) {
+    if (!m || p.hangingLedge || !this.active) {
       this.setVisible(false)
       return
     }

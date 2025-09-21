@@ -106,7 +106,6 @@ export class GameMap {
 
   loadCrate() {
     const crateObject = this.map.getObjectLayer('Crate')!.objects[0]
-    console.log({ crateObject })
     this.scene.add
       .image(crateObject.x!, crateObject.y! + 2, 'crate')
       .setOrigin(0, 1)
@@ -116,11 +115,12 @@ export class GameMap {
   loadCoins() {
     this.coins = this.scene.physics.add.group()
     const coinObjects = this.map.getObjectLayer('Coins')!.objects
-    coinObjects.forEach(({ x, y }: any) => {
+    coinObjects.forEach(({ x, y, name }: any) => {
       const coin = this.scene.physics.add
         .sprite(x!, y! - 2, 'coin')
         .setOrigin(0, 1)
         .setBodySize(10, 10)
+        .setName(name)
       this.coins.add(coin)
       this.scene.tweens.add({
         targets: coin,

@@ -130,6 +130,7 @@ export class GameScene extends Scene {
 
   collectCoin = (_player: any, coin: any) => {
     this.gameMap.coins.remove(coin)
+    if (coin.name === 'special') this.watermelonCompass.active = true
     coin.destroy()
     this.sound.play('coin', {
       volume: 0.5,
