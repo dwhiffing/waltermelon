@@ -232,6 +232,19 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (Math.abs(py - ty) > 10) return null
     if (px < tx || px > tx + tileSize) return null
 
+    const approachingFromTop =
+      this.onGround && this.slopeDirection === 0 && this.body.velocity.y >= 0
+
+    if (approachingFromTop) {
+      const tx = tile.x * tileSize
+      const px = this.body.x + this.body.width / 2 + 1
+      const slopeDirection = tile?.index === 4 ? 1 : -1
+      const relX = (px - tx) / tileSize
+      const x = slopeDirection === 1 ? relX : 1 - relX
+
+      if (x > 0.9) return null
+    }
+
     const relativeX = (px - tx) / tileSize
 
     if (tile.index === 4) {
