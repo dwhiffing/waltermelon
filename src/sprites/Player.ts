@@ -3,8 +3,9 @@ import { MovingTile } from './MovingTile'
 
 const ACCELERATION = 160
 const MAX_SPEED = 100
-const JUMP_HEIGHT = 90
-const MAX_JUMP_HOLD_TIME = 120
+const JUMP_HEIGHT = 100
+const MAX_JUMP_HOLD_TIME = 220
+const JUMP_EXTRA_HEIGHT_PER_SEC = 330
 const DRAG = 250
 const WALL_SLIDE_DRAG = 500
 const WALL_SLIDE_SPEED = 25
@@ -321,8 +322,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       const chargeDuration = this.scene.time.now - this.jumpStartTime
       if (chargeDuration <= MAX_JUMP_HOLD_TIME) {
         const deltaTime = this.scene.game.loop.delta / 1000
-        const extraVelocityPerSecond = 600
-        const extraVelocity = extraVelocityPerSecond * deltaTime
+        const extraVelocity = JUMP_EXTRA_HEIGHT_PER_SEC * deltaTime
         this.body.setVelocityY(this.body.velocity.y - extraVelocity)
       }
     }
