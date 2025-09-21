@@ -24,7 +24,7 @@ export class GameScene extends Scene {
   panTween: Phaser.Tweens.Tween | null = null
   isPanned: boolean
   coinCount: number = 0
-  cointText: Phaser.GameObjects.BitmapText
+  coinText: Phaser.GameObjects.BitmapText
   coinIcon: Phaser.GameObjects.Sprite
   coinTween: Phaser.Tweens.Tween | null = null
   coinsTimer: Phaser.Time.TimerEvent | null = null
@@ -44,7 +44,7 @@ export class GameScene extends Scene {
     this.player = new Player(this)
     this.particles = this.add
       .particles(0, 0, 'bits', MELON_PARTICLE)
-      .setDepth(40)
+      .setDepth(60)
 
     this.cursors = this.input.keyboard!.createCursorKeys()
     this.zKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.Z)
@@ -128,7 +128,7 @@ export class GameScene extends Scene {
     this.gameMap.coins.remove(coin)
     coin.destroy()
     this.sound.play('coin', {
-      volume: 1.5,
+      volume: 0.5,
       rate: 1 + (Math.random() * 0.4 - 0.2),
     })
     this.particles.explode(8, this.player.x - 4, this.player.y + 9)
@@ -148,7 +148,7 @@ export class GameScene extends Scene {
       .setScrollFactor(0)
       .setDepth(100)
 
-    this.cointText = this.add
+    this.coinText = this.add
       .bitmapText(x + 12, y - 4, 'wayfarer', '0')
       .setScrollFactor(0)
       .setTintFill(0xfcdeea)
@@ -156,18 +156,18 @@ export class GameScene extends Scene {
   }
 
   showCoinCounter() {
-    this.cointText.setText(this.coinCount.toString())
+    this.coinText.setText(this.coinCount.toString())
     this.coinsTimer?.destroy()
     this.coinsTimer = null
 
     this.coinTween?.stop()
     this.coinTween = this.tweens.add({
-      targets: [this.coinIcon, this.cointText],
+      targets: [this.coinIcon, this.coinText],
       x: 130,
       duration: 800,
       ease: 'Back.easeOut',
       onUpdate: () => {
-        this.cointText.x = this.coinIcon.x + 11
+        this.coinText.x = this.coinIcon.x + 11
       },
       onComplete: this.startHideTimer,
     })
@@ -181,12 +181,12 @@ export class GameScene extends Scene {
   hideCoinCounter = () => {
     this.coinTween?.stop()
     this.coinTween = this.tweens.add({
-      targets: [this.coinIcon, this.cointText],
+      targets: [this.coinIcon, this.coinText],
       x: 180,
       duration: 800,
       ease: 'Back.easeIn',
       onUpdate: () => {
-        this.cointText.x = this.coinIcon.x + 11
+        this.coinText.x = this.coinIcon.x + 11
       },
     })
   }
