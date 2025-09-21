@@ -64,7 +64,7 @@ export class GameMap {
     this.map.setCollision(COLLISION_TILES)
     this.overlay = this.map
       .createLayer('Overlay', tileset)!
-      .setDepth(1000)
+      .setDepth(50)
       .setAlpha(1)
 
     const platformsLayer = this.map.getObjectLayer('Platforms')
