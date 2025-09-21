@@ -96,6 +96,8 @@ export class GameMap {
     if (this.scene.player.onGround)
       this.checkPlayerSteppedOnTile(this.scene.player.body)
 
+    this.checkPlayerHangingOnTile()
+
     const currentlyOverlapping = this.checkOverlayTileOverlap()
     if (currentlyOverlapping !== this.isOverlappingOverlay) {
       this.isOverlappingOverlay = currentlyOverlapping
@@ -167,6 +169,30 @@ export class GameMap {
     }
 
     return false
+  }
+
+  checkPlayerHangingOnTile(): boolean {
+    if (!this.scene.player.hangingLedge) return false
+
+    const hangingLedge = this.scene.player.hangingLedge
+    const { tileX, tileY } = hangingLedge
+    const tile = this.layer.getTileAt(tileX, tileY)
+    const tileKey = `${tileX},${tileY}`
+
+    if (
+      !tile?.collides ||
+      this.steppedOnTiles.has(tileKey) ||
+      !CRUMBLING_TILES.includes(tile.index)
+    )
+      return false
+
+    this.steppedOnTiles.add(tileKey)
+    this.tilesToRemove.set(tileKey, {
+      removeTime: this.scene.time.now + TILE_REMOVE_DELAY,
+      crackStartTime: this.scene.time.now + TILE_CRACK_DELAY,
+    })
+
+    return true
   }
 
   getTileWorldPosition(tileKey: string) {

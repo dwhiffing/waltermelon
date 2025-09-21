@@ -38,7 +38,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   isWallSliding = false
   wallDirection = 0
   lastVelocity = 0
-  hangingLedge: { x: number; y: number; direction: number } | null = null
   tripDirection = 0
   tripCheck = false
   isJumping = false
@@ -56,6 +55,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   slideSoundObject: Phaser.Sound.BaseSound | null = null
   isPlayingSlideSounds = false
   movingTile: MovingTile | null = null
+  hangingLedge: {
+    x: number
+    y: number
+    direction: number
+    tileX: number
+    tileY: number
+  } | null = null
 
   constructor(scene: GameScene) {
     const spawn = scene.gameMap.tilemap.findObject(
@@ -555,7 +561,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const lx = tile.pixelX + (isLeft ? 14 : -4)
     const ly = tile.pixelY - 2
     this.scene.sound.play('grab', { volume: 0.3, rate: 0.5 })
-    this.hangingLedge = { x: lx, y: ly, direction }
+    this.hangingLedge = {
+      x: lx,
+      y: ly,
+      direction,
+      tileX: tile.x,
+      tileY: tile.y,
+    }
     this.body.setVelocity(0, 0).setAcceleration(0, 0)
     this.setFlipX(direction < 0).play('player-hang', true)
   }
