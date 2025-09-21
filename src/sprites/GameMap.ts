@@ -251,6 +251,11 @@ export class GameMap {
           const originalTile = { index: tile.index, x: tile.x, y: tile.y }
           this.layer.removeTileAt(tileX, tileY)
           this.destroyTileSprite(tileKey, this.crackSprites)
+          this.scene.melonParticles.explode(
+            12,
+            tileX * tileSize + 8,
+            tileY * tileSize + 8,
+          )
           this.scene.time.delayedCall(50 + Math.random() * 50, () => {
             this.scene.sound.play('tile-break', {
               rate: 1.5 + Math.random() * 0.2,

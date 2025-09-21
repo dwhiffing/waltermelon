@@ -12,7 +12,7 @@ const MELON_PARTICLE: Phaser.Types.GameObjects.Particles.ParticleEmitterConfig =
     speedX: { min: -60, max: 60 },
     angle: { min: 240, max: 290 },
     gravityY: 220,
-    frame: [1, 1, 1, 2, 0],
+    frame: [1, 1, 1, 2, 0, 3],
     lifespan: { max: 800, min: 500 },
     scale: { start: 2, end: 0 },
   }
