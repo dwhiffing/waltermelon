@@ -2,6 +2,7 @@ import { Scene } from 'phaser'
 import { Player } from '../sprites/Player'
 import { GameMap } from '../sprites/GameMap'
 import { GameTimer } from '../GameTimer'
+import { WatermelonCompass } from '../sprites/WatermelonCompass'
 
 export const tileSize = 16
 const timeScale = 1
@@ -28,6 +29,7 @@ export class GameScene extends Scene {
   coinIcon: Phaser.GameObjects.Sprite
   coinTween: Phaser.Tweens.Tween | null = null
   coinsTimer: Phaser.Time.TimerEvent | null = null
+  watermelonCompass: WatermelonCompass
 
   constructor() {
     super('Game')
@@ -42,6 +44,7 @@ export class GameScene extends Scene {
     this.gameMap = new GameMap(this)
 
     this.player = new Player(this)
+    this.watermelonCompass = new WatermelonCompass(this, this.player)
     this.particles = this.add
       .particles(0, 0, 'bits', MELON_PARTICLE)
       .setDepth(60)
@@ -78,6 +81,7 @@ export class GameScene extends Scene {
 
   update() {
     this.player.update()
+    this.watermelonCompass.update()
     this.handleCameraPan()
     this.gameMap.update()
   }
