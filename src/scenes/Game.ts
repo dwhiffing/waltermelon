@@ -25,6 +25,7 @@ export class GameScene extends Scene {
   gameMap: GameMap
   melonParticles: Phaser.GameObjects.Particles.ParticleEmitter
   dustParticles: Phaser.GameObjects.Particles.ParticleEmitter
+  dustParticles2: Phaser.GameObjects.Particles.ParticleEmitter
   panTween: Phaser.Tweens.Tween | null = null
   isPanned: boolean
   coinCount: number = 0
@@ -52,6 +53,7 @@ export class GameScene extends Scene {
       .particles(0, 0, 'bits', MELON_PARTICLE)
       .setDepth(60)
     this.dustParticles = this.add.particles(0, 0, 'bits').setDepth(1)
+    this.dustParticles2 = this.add.particles(0, 0, 'bits').setDepth(20)
 
     this.cursors = this.input.keyboard!.createCursorKeys()
     this.zKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.Z)

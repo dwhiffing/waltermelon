@@ -33,6 +33,15 @@ const DUST_WALK_PARTICLE: Phaser.Types.GameObjects.Particles.ParticleEmitterConf
     scale: { start: 0.75, end: 0 },
   }
 
+const DUST_LAND_PARTICLE: Phaser.Types.GameObjects.Particles.ParticleEmitterConfig =
+  {
+    speedY: { min: -1, max: -5 },
+    speedX: { min: -30, max: 30 },
+    frame: [3],
+    lifespan: { max: 800, min: 100 },
+    scale: { start: 0.75, end: 0 },
+  }
+
 const DUST_SLIDE_PARTICLE: Phaser.Types.GameObjects.Particles.ParticleEmitterConfig =
   {
     speedY: { min: -8, max: -20 },
@@ -148,6 +157,17 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.handleJump()
     this.detectSlope()
     this.lastVelocity = this.body.velocity.y
+
+    if (this.isSkidding) {
+      if (Phaser.Math.RND.between(0, 2) === 0)
+        this.scene.dustParticles
+          .setConfig(DUST_SLIDE_PARTICLE)
+          .explode(1, this.body.x + (this.flipX ? 7 : -3), this.body.y + 18)
+      if (Phaser.Math.RND.between(0, 3) === 0)
+        this.scene.dustParticles2
+          .setConfig(DUST_SLIDE_PARTICLE)
+          .explode(1, this.body.x + (this.flipX ? 7 : -3), this.body.y + 18)
+    }
   }
 
   handleInput = () => {
@@ -325,9 +345,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     } else {
       this.play('player-slope-slide', true)
     }
-    this.scene.dustParticles
-      .setConfig(DUST_SLIDE_PARTICLE)
-      .explode(1, this.body.x, this.body.y + 18)
+    if (Phaser.Math.RND.between(0, 3) === 0)
+      this.scene.dustParticles
+        .setConfig(DUST_SLIDE_PARTICLE)
+        .explode(1, this.body.x, this.body.y + 18)
   }
 
   handleJump = () => {
@@ -483,6 +504,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   startLand = () => {
     this.scene.sound.play('land', { volume: 0.4, rate: 1 })
 
+    this.scene.dustParticles
+      .setConfig(DUST_LAND_PARTICLE)
+      .explode(this.lastVelocity * 0.05, this.body.x, this.body.y + 20)
+
+    this.scene.dustParticles2
+      .setConfig(DUST_LAND_PARTICLE)
+      .explode(this.lastVelocity * 0.05, this.body.x, this.body.y + 20)
+
     this.horizontalCoyoteStartTime = 0
     this.leftGroundTime = 0
 
@@ -629,6 +658,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   handleWallSlide = () => {
     if (this.body.velocity.y < WALL_SLIDE_SPEED)
       this.body.velocity.y = WALL_SLIDE_SPEED
+
+    if (Phaser.Math.RND.between(0, 5) === 0)
+      this.scene.dustParticles
+        .setConfig(DUST_SLIDE_PARTICLE)
+        .explode(1, this.body.x + (this.flipX ? -5 : 7), this.body.y + 2)
     if (this.shouldExitWallSlide) {
       this.play({ key: 'player-fall' }, true)
       this.isWallSliding = false
