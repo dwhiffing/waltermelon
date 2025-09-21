@@ -3,7 +3,7 @@ import { MovingTile } from './MovingTile'
 
 const ACCELERATION = 160
 const MAX_SPEED = 100
-const JUMP_HEIGHT = 88
+const JUMP_HEIGHT = 90
 const MAX_JUMP_HOLD_TIME = 120
 const DRAG = 250
 const WALL_SLIDE_DRAG = 500
