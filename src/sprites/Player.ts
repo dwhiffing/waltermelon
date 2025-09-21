@@ -584,11 +584,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const playerFacingDirection = this.flipX ? -1 : 1
     const isLeft = tile.pixelX - this.x < 0
     const direction = isLeft ? -1 : 1
-    if (
-      this.inputDirection !== direction ||
-      playerFacingDirection !== direction
-    )
-      return
+    if (playerFacingDirection !== direction) return
 
     const lx = tile.pixelX + (isLeft ? 14 : -4)
     const ly = tile.pixelY - 2
@@ -664,7 +660,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         .setConfig(DUST_SLIDE_PARTICLE)
         .explode(1, this.body.x + (this.flipX ? -5 : 7), this.body.y + 2)
     if (this.shouldExitWallSlide) {
-      this.play({ key: 'player-fall' }, true)
       this.isWallSliding = false
       this.wallDirection = 0
     }
