@@ -100,7 +100,7 @@ export class GameMap {
     if (currentlyOverlapping !== this.isOverlappingOverlay) {
       this.isOverlappingOverlay = currentlyOverlapping
       this.overlay.setDepth(currentlyOverlapping ? 50 : 2)
-      this.tweenOverlayAlpha(currentlyOverlapping ? 0.5 : 1.0)
+      this.tweenOverlayAlpha(currentlyOverlapping ? 0 : 1.0)
     }
   }
 
@@ -319,8 +319,7 @@ export class GameMap {
     this.overlayAlphaTween = this.scene.tweens.add({
       targets: this.scene.gameMap.overlay,
       alpha: targetAlpha,
-      duration: 200,
-      ease: 'Sine.easeInOut',
+      duration: 0,
       onComplete: () => (this.overlayAlphaTween = null),
     })
   }
