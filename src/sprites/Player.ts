@@ -83,6 +83,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   isPlayingSlideSounds = false
   movingTile: MovingTile | null = null
   lastSkidTime = 0
+  lastWallSlideExitTime = 0
   hangingLedge: {
     x: number
     y: number
@@ -688,6 +689,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.shouldExitWallSlide) {
       this.isWallSliding = false
       this.wallDirection = 0
+      this.lastWallSlideExitTime = this.scene.time.now
     }
   }
 
@@ -708,12 +710,17 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   get canStartWallSlide() {
+    const wallSlideGracePeriod = 500 // Half second grace period
+    const timeSinceLastExit = this.scene.time.now - this.lastWallSlideExitTime
+    const graceExpired = timeSinceLastExit >= wallSlideGracePeriod
+
     return (
       !this.isWallSliding &&
       this.isTouchingWall &&
       !this.onGround &&
       !this.hangingLedge &&
-      this.body.velocity.y > 0
+      this.body.velocity.y > 0 &&
+      graceExpired
     )
   }
 
@@ -722,7 +729,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.onGround ||
       !this.isTouchingWall ||
       this.hangingLedge ||
-      (this.inputDirection !== 0 && this.inputDirection !== this.wallDirection)
+      (this.inputDirection !== 0 && this.inputDirection === -this.wallDirection)
     )
   }
 
@@ -731,6 +738,25 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   get touchingWallDirection() {
+    const body = this.body
+    const tileSize = this.scene.gameMap.tilemap.tileWidth
+
+    const leftTileX = Math.floor((body.x - 1) / tileSize)
+    const rightTileX = Math.floor((body.x + body.width + 1) / tileSize)
+    const midTileY = Math.floor((body.y + body.height / 2) / tileSize)
+
+    const leftTile = this.scene.gameMap.layer.getTileAt(leftTileX, midTileY)
+    if (leftTile && leftTile.collides) {
+      const leftWallEdge = (leftTileX + 1) * tileSize
+      if (body.x - leftWallEdge <= 1) return -1
+    }
+
+    const rightTile = this.scene.gameMap.layer.getTileAt(rightTileX, midTileY)
+    if (rightTile && rightTile.collides) {
+      const rightWallEdge = rightTileX * tileSize
+      if (rightWallEdge - (body.x + body.width) <= 1) return 1
+    }
+
     if (this.body.blocked.left) return -1
     if (this.body.blocked.right) return 1
     return 0
