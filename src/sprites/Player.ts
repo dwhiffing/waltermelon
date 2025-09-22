@@ -30,7 +30,7 @@ const DUST_WALK_PARTICLE: Phaser.Types.GameObjects.Particles.ParticleEmitterConf
     speedX: { min: -8, max: 8 },
     frame: [3],
     lifespan: { max: 2000, min: 200 },
-    scale: { start: 0.75, end: 0 },
+    scale: 0.5,
   }
 
 const DUST_LAND_PARTICLE: Phaser.Types.GameObjects.Particles.ParticleEmitterConfig =
@@ -39,7 +39,7 @@ const DUST_LAND_PARTICLE: Phaser.Types.GameObjects.Particles.ParticleEmitterConf
     speedX: { min: -30, max: 30 },
     frame: [3],
     lifespan: { max: 800, min: 100 },
-    scale: { start: 0.75, end: 0 },
+    scale: 0.5,
   }
 
 const DUST_SLIDE_PARTICLE: Phaser.Types.GameObjects.Particles.ParticleEmitterConfig =
@@ -48,7 +48,7 @@ const DUST_SLIDE_PARTICLE: Phaser.Types.GameObjects.Particles.ParticleEmitterCon
     speedX: { min: -4, max: 4 },
     frame: [3],
     lifespan: { max: 1500, min: 200 },
-    scale: { start: 0.75, end: 0 },
+    scale: 0.5,
   }
 
 export class Player extends Phaser.Physics.Arcade.Sprite {
