@@ -8,6 +8,7 @@ const CONFETTI_PARTICLE: any = {
   speedY: { min: 20, max: 40 },
   speedX: { min: -20, max: 20 },
   gravityY: 5,
+  frame: [1],
   lifespan: 8000,
   frequency: 150,
   quantity: 1,

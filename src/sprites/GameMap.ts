@@ -1,7 +1,7 @@
 import { GameScene, tileSize } from '../scenes/Game'
 import { MovingTile } from './MovingTile'
 
-const TILE_CRACK_DELAY = 100 // grace period before cracking starts
+const TILE_CRACK_DELAY = 500 // grace period before cracking starts
 const TILE_REMOVE_DELAY = 1500 // time it takes for them to destroy
 const TILE_RESTORE_DELAY = 5000 // total time before tile is fully restored
 const TILE_GROWTH_DELAY = 2500 // time before it starts to grow back
@@ -273,6 +273,10 @@ export class GameMap {
         }
 
         this.tilesToRemove.delete(tileKey)
+        const l = this.scene.player.hangingLedge
+        if (`${l?.tileX},${l?.tileY}` === tileKey) {
+          this.scene.player.hangingLedge = null
+        }
       }
     }
   }

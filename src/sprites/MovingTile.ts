@@ -47,14 +47,11 @@ export class MovingTile {
       : { x: this.originX, y: this.originY }
 
     let prevX = this.sprite.body!.x
-    const manhattanDistance =
-      Math.abs(this.sprite.x - currentTarget.x) +
-      Math.abs(this.sprite.y - currentTarget.y)
     this.tween = this.scene.tweens.add({
       targets: this.sprite,
       x: currentTarget.x,
       y: currentTarget.y,
-      duration: manhattanDistance * 20,
+      duration: 2000,
       ease: 'Quad.easeInOut',
       onUpdate: (_tween, target) => {
         const p = this.scene.player

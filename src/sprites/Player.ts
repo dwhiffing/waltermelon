@@ -118,7 +118,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const currentlyOnGround = this.onGround
     if (this.wasOnGroundLastFrame && !currentlyOnGround && !this.isJumping) {
       this.leftGroundTime = this.scene.time.now
-      if (this.xSpeed < 50) this.detectLedgeGrab()
+      if (this.xSpeed < 0) this.detectLedgeGrab()
     } else if (!this.wasOnGroundLastFrame && currentlyOnGround) {
       this.leftGroundTime = 0
     }
@@ -161,6 +161,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.lastVelocity = this.body.velocity.y
 
     if (this.isSkidding) {
+      if (!this.onGround) this.endSkid()
       if (Phaser.Math.RND.between(0, 2) === 0)
         this.scene.dustParticles
           .setConfig(DUST_SLIDE_PARTICLE)
@@ -589,20 +590,23 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   detectLedge = () => {
     if (!this.onGround && this.body.velocity.y > 250) return
 
-    const tile = this.getAdjacentTiles()[0]
-    if (!this.isValidLedge(tile)) return
+    const tiles = this.getAdjacentTiles()
+    for (let tile of tiles) {
+      if (!this.isValidLedge(tile)) continue
 
-    const distX = Math.abs(tile.pixelX - this.x) - (this.flipX ? 19 : 0)
-    const distY = Math.abs(tile.pixelY - this.y)
-    const acceptableDistY = this.isWallSliding ? 12 : 4
-    if (distY > acceptableDistY || distX > 4) return
+      const distX = Math.abs(tile.pixelX - this.x) - (this.flipX ? 19 : 0)
+      const distY = Math.abs(tile.pixelY - this.y)
+      const acceptableDistY = this.isWallSliding ? 12 : 4
+      if (distY > acceptableDistY || distX > 4) continue
 
-    const playerFacingDirection = this.flipX ? -1 : 1
-    const isLeft = tile.pixelX - this.x < 0
-    const direction = isLeft ? -1 : 1
-    if (playerFacingDirection !== direction) return
+      const playerFacingDirection = this.flipX ? -1 : 1
+      const isLeft = tile.pixelX - this.x < 0
+      const direction = isLeft ? -1 : 1
+      if (playerFacingDirection !== direction) continue
 
-    this.grabLedge(tile)
+      this.grabLedge(tile)
+      break
+    }
   }
 
   grabLedge = (tile: Phaser.Tilemaps.Tile) => {
@@ -666,6 +670,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   startWallSlide = () => {
     this.isWallSliding = true
+    this.rollDirection = 0
     this.wallDirection = this.touchingWallDirection
     this.play({ key: 'player-wallslide', repeat: -1 }, true).setFlipX(
       this.wallDirection === -1,
