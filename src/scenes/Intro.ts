@@ -73,7 +73,7 @@ export class IntroScene extends Scene {
 
     this.time.delayedCall(1500, () => {
       this.input.keyboard?.once('keydown-Z', () => {
-        this.sound.play('jump')
+        if (!this.startingGame) this.sound.play('jump')
         this.startGame()
       })
     })
@@ -113,7 +113,8 @@ export class IntroScene extends Scene {
             x: 34,
             duration: CRATE_CRASH_TIME,
             onComplete: () => {
-              this.sound.play('crate-land', { volume: 0.3 })
+              if (!this.startingGame)
+                this.sound.play('crate-land', { volume: 0.3 })
               this.time.delayedCall(100, () => {
                 this.particles.x = this.crate.x - 5
                 this.particles.y = this.crate.y
@@ -123,10 +124,11 @@ export class IntroScene extends Scene {
                   delay: 135,
                   repeat: 17,
                   callback: () => {
-                    this.sound.play('melon-shoot', {
-                      volume: 0.2,
-                      rate: 0.3 + Math.random() * 0.2,
-                    })
+                    if (!this.startingGame)
+                      this.sound.play('melon-shoot', {
+                        volume: 0.2,
+                        rate: 0.3 + Math.random() * 0.2,
+                      })
                   },
                 })
                 this.time.delayedCall(2500, () => this.particles.stop())
@@ -149,7 +151,7 @@ export class IntroScene extends Scene {
             ease: 'Sine.easeIn',
           })
           this.banana.setAlpha(0)
-          this.sound.play('slip', { volume: 0.3 })
+          if (!this.startingGame) this.sound.play('slip', { volume: 0.3 })
 
           this.player.play({ key: 'player-roll', repeat: 2, frameRate: 12 })
           this.add.tween({
@@ -251,11 +253,13 @@ export class IntroScene extends Scene {
           }
         }
 
-        if (charIndex % 1 === 0)
-          this.sound.play('voice', {
-            volume: 0.05,
-            rate: 0.8 + Math.random() * 0.1,
-          })
+        if (charIndex % 1 === 0) {
+          if (!this.startingGame)
+            this.sound.play('voice', {
+              volume: 0.05,
+              rate: 0.8 + Math.random() * 0.1,
+            })
+        }
 
         this.text.setText(this.currentText)
       },
@@ -275,7 +279,7 @@ export class IntroScene extends Scene {
   jumpOffLedge = () => {
     this.player.play({ key: 'player-idle', repeat: -1, frameRate: 6 })
     this.time.delayedCall(600, () => {
-      this.sound.play('jump', { volume: 0.3 })
+      if (!this.startingGame) this.sound.play('jump', { volume: 0.3 })
       this.player.play({ key: 'player-jump' })
       this.add.tween({
         targets: this.player,
