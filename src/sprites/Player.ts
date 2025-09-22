@@ -1,15 +1,15 @@
 import { GameScene, tileSize } from '../scenes/Game'
 import { MovingTile } from './MovingTile'
 
-const ACCELERATION = 140
+const ACCELERATION = 160
 const MAX_SPEED = 100
 const JUMP_HEIGHT = 100
 const MAX_JUMP_HOLD_TIME = 220
 const JUMP_EXTRA_HEIGHT_PER_SEC = 330
-const DRAG = 245
+const DRAG = 260
 const WALL_SLIDE_DRAG = 500
 const WALL_SLIDE_SPEED = 25
-const AIR_CONTROL_PERCENT = 0.45
+const AIR_CONTROL_PERCENT = 0.55
 const STANDING_LONG_JUMP_VELOCITY = 45
 const HORIZONTAL_COYOTE_TIME = 150
 const COYOTE_TIME = 100
