@@ -84,8 +84,6 @@ export class GameMap {
     })
     this.loadCoins()
     this.loadCrate()
-
-    console.log(this.totalCoins)
   }
 
   update() {
