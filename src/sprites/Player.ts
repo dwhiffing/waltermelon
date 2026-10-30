@@ -643,6 +643,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       const isLeft = tile.pixelX - this.x < 0
       const direction = isLeft ? -1 : 1
       if (playerFacingDirection !== direction) continue
+      // only grab when holding toward the ledge
+      if (this.inputDirection !== direction) continue
 
       this.grabLedge(tile)
       break

@@ -28,15 +28,14 @@ const JAM = {
 }
 
 const TIGHT: MovementConfig = {
-  ...JAM,
-  maxSpeed: 95,
-  groundAccel: 700,
-  groundDecel: 900,
-  turnAccel: 1400,
-  airAccel: 450,
-  airDecel: 200,
-  accelTaper: 0,
-  turnLockMs: 0,
+  maxSpeed: 108,
+  groundAccel: 170,
+  groundDecel: 270,
+  turnAccel: 260,
+  airAccel: 300,
+  airDecel: 330,
+  accelTaper: 0.25,
+  turnLockMs: 90,
   jumpVelocity: 130,
   jumpHoldMs: 160,
   jumpHoldBoost: 240,
@@ -47,7 +46,8 @@ const TIGHT: MovementConfig = {
   jumpBufferMs: 120,
   softLandKeep: 1,
   landLockFallSpeed: 300,
-  standingJumpVX: 60,
+  standingJumpVX: 104,
+  rollSpeed: 200,
 }
 
 export const PRESETS: Record<string, MovementConfig> = {
