@@ -1,4 +1,5 @@
 import { Scene } from 'phaser'
+import { SKIP_INTRO } from '../movement'
 
 export class BootScene extends Scene {
   constructor() {
@@ -51,7 +52,7 @@ export class BootScene extends Scene {
     this.anims.createFromAseprite('growth')
     this.anims.createFromAseprite('crack')
 
-    // this.scene.start('Game')
-    this.scene.launch('Transition', { from: 'Boot', to: 'Intro' })
+    const to = SKIP_INTRO ? 'Game' : 'Intro'
+    this.scene.launch('Transition', { from: 'Boot', to })
   }
 }
