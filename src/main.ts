@@ -5,6 +5,8 @@ import { IntroScene } from './scenes/Intro'
 import { WinScene } from './scenes/Win'
 import { TransitionScene } from './scenes/Transition'
 import { AudioToggle } from './AudioToggle'
+import { TUNING_ENABLED } from './movement'
+import { createTuningPanel } from './TuningPanel'
 
 import { Game, Types } from 'phaser'
 
@@ -47,5 +49,7 @@ document.addEventListener('keydown', (event) => {
     }
   }
 })
+
+if (TUNING_ENABLED) createTuningPanel(game)
 
 export default game

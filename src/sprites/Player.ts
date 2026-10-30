@@ -1,25 +1,14 @@
 import { GameScene, tileSize } from '../scenes/Game'
 import { MovingTile } from './MovingTile'
+import { MOVE } from '../movement'
 
-const ACCELERATION = 160
-const MAX_SPEED = 100
-const JUMP_HEIGHT = 100
-const MAX_JUMP_HOLD_TIME = 220
-const JUMP_EXTRA_HEIGHT_PER_SEC = 330
-const DRAG = 260
 const WALL_SLIDE_DRAG = 500
 const WALL_SLIDE_SPEED = 25
-const AIR_CONTROL_PERCENT = 0.55
-const STANDING_LONG_JUMP_VELOCITY = 45
 const HORIZONTAL_COYOTE_TIME = 150
-const COYOTE_TIME = 100
-const ROLL_SPEED = 200
 const SIZE_X = 5
 const SIZE_Y = 20
 const OFFSET_X = 14
 const OFFSET_Y = 31
-
-const MAX_FALLING_SPEED = 400
 
 const STEP_INITIAL_DELAY = 0
 const STEP_REPEAT_DELAY = 360
@@ -74,6 +63,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   horizontalCoyoteStartTime = 0
   lastHorizontalInput = 0
   leftGroundTime = 0
+  directionChangeTime = 0
+  jumpPressedTime = 0
   wasOnGroundLastFrame = false
   stepSoundEvent: Phaser.Time.TimerEvent | null = null
   stepIndex = 0
@@ -138,7 +129,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.isWallSliding) this.handleWallSlide()
     if (this.shouldPlayFallAnim) this.play({ key: 'player-fall' }, true)
     if (this.onGround && !this.onSlope)
-      this.setMaxVelocity(this.maxSpeed, MAX_FALLING_SPEED)
+      this.setMaxVelocity(this.maxSpeed, MOVE.maxFallSpeed)
 
     if (this.onGround) {
       if (this.shouldLand) this.startLand()
@@ -157,7 +148,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     this.handleInput()
     this.handleStep()
+    this.handleJumpBuffer()
     this.handleJump()
+    this.handleFallGravity()
     this.detectSlope()
     this.lastVelocity = this.body.velocity.y
 
@@ -177,41 +170,62 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   handleInput = () => {
     if (!this.canInput) return
 
-    const l = this.scene.cursors.left.isDown
-    const r = this.scene.cursors.right.isDown
-    const dir = l ? -1 : r ? 1 : 0
+    const dir = this.inputDirection
+    const now = this.scene.time.now
 
-    if (this.onGround && (l || r)) this.setFlipX(l)
+    if (dir !== 0 && this.prevInputDirection !== 0 && dir !== this.prevInputDirection)
+      this.directionChangeTime = now
+    this.prevInputDirection = dir
+
+    if (this.onGround && dir !== 0) this.setFlipX(dir === -1)
 
     const isInHorizontalCoyoteTime =
       this.isJumping &&
       this.horizontalCoyoteStartTime > 0 &&
-      this.scene.time.now - this.horizontalCoyoteStartTime <
-        HORIZONTAL_COYOTE_TIME
+      now - this.horizontalCoyoteStartTime < HORIZONTAL_COYOTE_TIME
 
     const justStartedPressingDirection =
       dir !== 0 && this.lastHorizontalInput === 0 && isInHorizontalCoyoteTime
 
-    if (justStartedPressingDirection) {
-      const jumpHorizontalVelocity = dir * STANDING_LONG_JUMP_VELOCITY
-      this.body.setVelocityX(jumpHorizontalVelocity)
-      this.setFlipX(dir === -1)
-      this.horizontalCoyoteStartTime = 0
-    } else if (dir !== 0) {
-      const currentSpeedPercent = this.xSpeed / this.maxSpeed
-      const acceleration =
-        dir === this.moveDirection
-          ? ACCELERATION * (1 - currentSpeedPercent * 0.5)
-          : ACCELERATION
-
-      this.body.setAccelerationX(acceleration * this.controlPercentage * dir)
-    } else if (!this.onSlope && !this.isRolling) {
-      this.body.setAccelerationX(0)
-    }
-
     this.lastHorizontalInput = dir
 
-    this.scene.time.delayedCall(100, () => (this.prevInputDirection = dir))
+    // velocity is driven directly here, so physics drag/acceleration stay off
+    this.body.setAccelerationX(0).setDragX(0)
+
+    if (justStartedPressingDirection) {
+      const vx = dir * Math.max(MOVE.standingJumpVX, this.xSpeed)
+      this.body.setVelocityX(vx)
+      this.setFlipX(dir === -1)
+      this.horizontalCoyoteStartTime = 0
+      return
+    }
+
+    const vx = this.body.velocity.x
+    const ground = this.onGround
+    const target = dir * this.maxSpeed
+    let rate: number
+
+    if (dir === 0) {
+      rate = ground
+        ? MOVE.groundDecel * (this.isRunning ? 1 : 2)
+        : MOVE.airDecel
+    } else if (vx !== 0 && Math.sign(vx) !== dir) {
+      rate = (ground ? MOVE.turnAccel : MOVE.airAccel) * this.controlPercentage
+    } else if (Math.abs(vx) > this.maxSpeed) {
+      // carried momentum (rolls, slope launches) bleeds off instead of snapping
+      rate = ground ? MOVE.groundDecel : MOVE.airDecel
+    } else {
+      const taper = 1 - (Math.abs(vx) / this.maxSpeed) * MOVE.accelTaper
+      rate =
+        (ground ? MOVE.groundAccel : MOVE.airAccel) *
+        taper *
+        this.controlPercentage
+    }
+
+    const step = rate * (this.scene.game.loop.delta / 1000)
+    const next =
+      vx < target ? Math.min(vx + step, target) : Math.max(vx - step, target)
+    this.body.setVelocityX(next)
   }
 
   handleStep = () => {
@@ -333,12 +347,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const isRolling = this.rollDirection !== 0
     const isAgainst = this.moveDirection !== this.slopeDirection
     const dx = isRolling && isAgainst ? -250 : -100
-    const maxV = isAgainst ? (isRolling ? 80 : 40) : MAX_SPEED
+    const maxV = isAgainst ? (isRolling ? 80 : 40) : this.maxSpeed
     this.setFlipX(
       isRolling ? this.moveDirection === -1 : this.slopeDirection < 0,
     )
     this.body.setAccelerationX(this.slopeDirection * dx)
-    this.body.setMaxVelocity(maxV, MAX_FALLING_SPEED)
+    this.body.setMaxVelocity(maxV, MOVE.maxFallSpeed)
 
     if (isRolling) {
       if (this.anims.currentAnim?.key !== 'player-roll')
@@ -358,9 +372,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   handleJump = () => {
     if (this.isJumping && this.jumpKeyHeld && this.body.velocity.y < 0) {
       const chargeDuration = this.scene.time.now - this.jumpStartTime
-      if (chargeDuration <= MAX_JUMP_HOLD_TIME) {
+      if (chargeDuration <= MOVE.jumpHoldMs) {
         const deltaTime = this.scene.game.loop.delta / 1000
-        const extraVelocity = JUMP_EXTRA_HEIGHT_PER_SEC * deltaTime
+        const extraVelocity = MOVE.jumpHoldBoost * deltaTime
         this.body.setVelocityY(this.body.velocity.y - extraVelocity)
       }
     }
@@ -372,7 +386,28 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
-  startJump = async () => {
+  handleJumpBuffer = () => {
+    if (!this.jumpPressedTime || !this.scene.zKey.isDown) return
+    if (this.scene.time.now - this.jumpPressedTime > MOVE.jumpBufferMs) return
+    this.tryJump()
+  }
+
+  handleFallGravity = () => {
+    const falling =
+      this.body.velocity.y > 0 &&
+      !this.isWallSliding &&
+      !this.onSlope &&
+      !this.hangingLedge
+    const gravity = this.scene.physics.world.gravity.y
+    this.body.setGravityY(falling ? (MOVE.fallGravityMult - 1) * gravity : 0)
+  }
+
+  startJump = () => {
+    this.jumpPressedTime = this.scene.time.now
+    this.tryJump()
+  }
+
+  tryJump = () => {
     const canNormalJump =
       this.onGround &&
       !this.isRolling &&
@@ -387,6 +422,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     if (!canNormalJump && !canWallJump && !canCoyoteJump) return
 
+    this.jumpPressedTime = 0
     this.jumpKeyHeld = true
     this.jumpStartTime = this.scene.time.now
     this.horizontalCoyoteStartTime = this.scene.time.now
@@ -395,25 +431,25 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.leftGroundTime = 0
 
     if (canWallJump) {
-      this.doJump(JUMP_HEIGHT * -0.8, -this.wallDirection * 68)
+      this.doJump(MOVE.jumpVelocity * -0.8, -this.wallDirection * 68)
       this.setFlipX(this.wallDirection === 1)
       this.isWallSliding = false
       this.wallDirection = 0
       return
     }
     if (this.onSlope) {
-      this.setMaxVelocity(this.maxSpeed, MAX_FALLING_SPEED)
-      this.doJump(JUMP_HEIGHT * -1, this.slopeDirection * -65)
+      this.setMaxVelocity(this.maxSpeed, MOVE.maxFallSpeed)
+      this.doJump(MOVE.jumpVelocity * -1, this.slopeDirection * -65)
       this.slopeDirection = 0
       return
     }
 
     const { left, right } = this.scene.cursors
-    const vx = STANDING_LONG_JUMP_VELOCITY
+    const vx = MOVE.standingJumpVX
     let x =
       left.isDown && this.flipX ? -vx : right.isDown && !this.flipX ? vx : 0
     if (Math.abs(x) < Math.abs(this.body.velocity.x)) x = this.body.velocity.x
-    this.doJump(-JUMP_HEIGHT, x)
+    this.doJump(-MOVE.jumpVelocity, x)
   }
 
   doJump = (velocityY: number, velocityX?: number) => {
@@ -430,6 +466,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   endJump = () => {
     this.jumpKeyHeld = false
+    if (this.isJumping && this.body.velocity.y < 0)
+      this.body.setVelocityY(this.body.velocity.y * MOVE.jumpCut)
   }
 
   startStepSounds = () => {
@@ -490,7 +528,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         ? -1
         : 1
 
-    this.body.setVelocityX(this.rollDirection * ROLL_SPEED)
+    this.body.setVelocityX(this.rollDirection * MOVE.rollSpeed)
 
     this.scene.sound.play('roll', { volume: 0.2 })
     this.play({ key: 'player-roll', frameRate: 10 }).once(
@@ -519,7 +557,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.horizontalCoyoteStartTime = 0
     this.leftGroundTime = 0
 
-    if (this.lastVelocity < 85) return (this.body.velocity.x *= 0.5)
+    if (this.lastVelocity < MOVE.landLockFallSpeed)
+      return (this.body.velocity.x *= MOVE.softLandKeep)
 
     this.isLanding = true
     const isFast = this.lastVelocity > 200
@@ -604,6 +643,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       const isLeft = tile.pixelX - this.x < 0
       const direction = isLeft ? -1 : 1
       if (playerFacingDirection !== direction) continue
+      // only grab when holding toward the ledge
+      if (this.inputDirection !== direction) continue
 
       this.grabLedge(tile)
       break
@@ -769,7 +810,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   get isInCoyoteTime() {
     return (
       this.leftGroundTime > 0 &&
-      this.scene.time.now - this.leftGroundTime < COYOTE_TIME
+      this.scene.time.now - this.leftGroundTime < MOVE.coyoteMs
     )
   }
 
@@ -794,7 +835,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       !this.isRolling &&
       this.isRunning &&
       this.xSpeed > 70 &&
-      this.isChangingDirection &&
+      this.inputDirection === -this.moveDirection &&
       skidCooldownExpired
     )
   }
@@ -858,18 +899,18 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   get isRunning() {
-    return this.xSpeed >= MAX_SPEED * 0.6
+    return this.xSpeed >= this.maxSpeed * 0.6
   }
 
   get maxSpeed() {
-    return MAX_SPEED
+    return MOVE.maxSpeed
   }
 
   get targetDragX() {
     if (!this.onGround || this.isRolling || this.isTripping) return 0
     if (this.onSlope) return 9
 
-    return this.isRunning ? DRAG : DRAG * 2
+    return this.isRunning ? MOVE.groundDecel : MOVE.groundDecel * 2
   }
 
   get targetDragY() {
@@ -905,11 +946,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   get controlPercentage() {
-    return this.isChangingDirection
-      ? 0
-      : this.onGround
-      ? 1
-      : AIR_CONTROL_PERCENT
+    return this.isChangingDirection ? 0 : 1
   }
 
   get inputDirection() {
@@ -923,8 +960,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   get isChangingDirection() {
     return (
       this.inputDirection !== 0 &&
-      this.prevInputDirection !== 0 &&
-      this.inputDirection !== this.prevInputDirection
+      this.scene.time.now - this.directionChangeTime < MOVE.turnLockMs
     )
   }
 }

@@ -20,6 +20,7 @@
     "music": "ffmpeg -i sources/trees.wav -codec:a libmp3lame -qscale:a 6 public/assets/music.mp3 -y;ffmpeg -i sources/trees-loop.wav -codec:a libmp3lame -qscale:a 6 public/assets/music-loop.mp3 -y"
   },
   "devDependencies": {
+    "lil-gui": "^0.21.0",
     "terser": "^5.44.0",
     "typescript": "^5.9.2",
     "vite": "^7.1.5"
